@@ -6,6 +6,8 @@ use rand::Rng;
 use std::cell::Cell;
 use std::fmt;
 
+// Player is the trait to repesent a player of the game
+// most notably the players behavior implementation
 pub trait Player {
     fn get_name(&self) -> String {
         self.get_entity().get_name()
@@ -15,6 +17,7 @@ pub trait Player {
     fn choose(&self) -> Choice;
 }
 
+// A concrete struct from which to base the Player trait
 #[derive(Clone, Debug)]
 pub struct Entity {
     name: String,
@@ -40,6 +43,8 @@ impl Entity {
     }
 }
 
+// Memory is used when making a choice on how to play
+// TODO::implement a lot more functions on memory
 #[derive(Clone, Debug)]
 pub struct Memory {
     opp_last_move: Choice,
@@ -56,6 +61,8 @@ impl Memory {
         }
     }
 }
+
+// The following are implementations of three personalities in the game
 
 #[derive(Clone, Debug)]
 pub struct AlwaysCooperate {
@@ -107,6 +114,7 @@ impl Player for CopyCat {
     }
 }
 
+// PlayerFacory returns a random player
 pub struct PlayerFactory;
 impl PlayerFactory {
     pub fn get_player() -> Box<dyn Player> {
