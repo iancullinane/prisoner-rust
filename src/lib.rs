@@ -3,20 +3,30 @@
 use std::cmp::Eq;
 use std::fmt;
 
-pub const TITLE: &'static str = "The prisoners dilemna";
+#[macro_use]
+extern crate prettytable;
+use prettytable::{format, Cell as tCell, Row, Table};
+// se prettytable::{format};
 
 pub mod entity;
 pub mod game;
 
 use entity::PlayerFactory;
 
+pub const TITLE: &'static str = "The prisoners dilemna";
 #[derive(Copy, Clone)]
 pub enum Outcome {
-    NOTHING = 0,
+    PUNISH = 0,
     SUCKER = -1,
     REWARD = 2,
     TEMPTATION = 3,
 }
+// pub enum Outcome {
+//     PUNISH = -2,
+//     SUCKER = -3,
+//     REWARD = -1,
+//     TEMPTATION = 0,
+// }
 
 impl Outcome {
     pub fn as_i16(&self) -> i16 {
@@ -30,43 +40,49 @@ pub enum Choice {
     COOPERATE,
 }
 
-pub fn play_tournament(mut game: game::Game, rounds: i16) {
-    println!("Tournament mode:");
+pub fn play_game(mut game: game::Game, rounds: i16) {
     let players = game.get_players();
-    for _ in 0..rounds {
+    if rounds == 0 {
         play_round_robin(players);
+    } else {
+        play_tournament(players, rounds)
     }
 
-    for p in players {
-        println!("[{}] {}", p.get_behavior(), p.get_entity())
+    print_result(players);
+}
+
+fn play_tournament(players: &mut Vec<Box<dyn entity::Player>>, rounds: i16) {
+    for _ in 0..rounds {
+        play_round_robin(players);
     }
 }
 
 fn play_round_robin(players: &mut Vec<Box<dyn entity::Player>>) {
     for i in 0..players.len() {
-        for j in 0..players.len() {
-            if players[i].get_name() == players[j].get_name() {
-                continue;
-            }
-            play_round(&players[i], &players[j])
+        if i + 1 == players.len() {
+            return;
         }
+        if players[i].get_name() == players[i + 1].get_name() {
+            continue;
+        }
+        play_round(&players[i], &players[i + 1])
     }
 }
 
-fn determine(m1: &Choice, m2: &Choice) -> Outcome {
+fn determine(m1: &Choice, m2: &Choice) -> (Outcome, Outcome) {
     match m1 {
         Choice::COOPERATE => {
             if m1 == m2 {
-                Outcome::REWARD
+                (Outcome::REWARD, Outcome::REWARD)
             } else {
-                Outcome::SUCKER
+                (Outcome::SUCKER, Outcome::TEMPTATION)
             }
         }
         Choice::CHEAT => {
             if m1 == m2 {
-                Outcome::NOTHING
+                (Outcome::PUNISH, Outcome::PUNISH)
             } else {
-                Outcome::TEMPTATION
+                (Outcome::TEMPTATION, Outcome::SUCKER)
             }
         }
     }
@@ -76,14 +92,40 @@ pub fn play_round(player_one: &Box<dyn entity::Player>, player_two: &Box<dyn ent
     let m1 = player_one.choose();
     let m2 = player_two.choose();
 
-    let o1 = determine(&m1, &m2);
-    let o2 = determine(&m2, &m1);
-
-    print!("{} vs {}\n", player_one.get_name(), player_two.get_name());
-    print!("{} : {}\n", o1.as_i16(), o2.as_i16());
+    let (o1, o2) = determine(&m1, &m2);
 
     player_one.get_entity().record_result(o1);
     player_two.get_entity().record_result(o2);
+}
+
+fn print_outcome(
+    player_one: &Box<dyn entity::Player>,
+    player_two: &Box<dyn entity::Player>,
+    o1: Outcome,
+    o2: Outcome,
+) {
+    let mut table = Table::new();
+
+    // Add a row per time
+    table.add_row(row!["Name", "Behavior", "Result"]);
+    table.add_row(Row::new(vec![
+        tCell::new(&player_one.get_name()),
+        tCell::new(&player_one.get_behavior()),
+        tCell::new(&o1.to_string()),
+    ]));
+    table.add_row(Row::new(vec![
+        tCell::new(&player_two.get_name()),
+        tCell::new(&player_two.get_behavior()),
+        tCell::new(&o2.to_string()),
+    ]));
+    table.printstd();
+    // for p in players {
+    //     table.add_row(Row::new(vec![
+    //         tCell::new(&p.get_behavior()),
+    //         tCell::new(&p.get_name()),
+    //         tCell::new(&p.get_entity().get_score().to_string()),
+    //     ]));
+    // }
 }
 
 pub fn new_game(players: i32) -> game::Game {
@@ -100,6 +142,31 @@ pub fn new_game(players: i32) -> game::Game {
     r
 }
 
+pub fn print_result(players: &Vec<Box<dyn entity::Player>>) {
+    let mut table = Table::new();
+
+    // Add a row per time
+    table.add_row(row!["Behavior", "Name", "Score"]);
+    for p in players {
+        table.add_row(Row::new(vec![
+            tCell::new(&p.get_behavior()),
+            tCell::new(&p.get_name()),
+            tCell::new(&p.get_entity().get_score().to_string()),
+        ]));
+    }
+
+    let format = format::FormatBuilder::new()
+        .column_separator('|')
+        .borders('|')
+        .separators(
+            &[format::LinePosition::Top, format::LinePosition::Bottom],
+            format::LineSeparator::new('-', '+', '+', '+'),
+        )
+        .padding(1, 1)
+        .build();
+    table.set_format(format);
+    table.printstd();
+}
 // For printing outcomes
 impl fmt::Display for Choice {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -114,7 +181,7 @@ impl fmt::Display for Choice {
 impl fmt::Display for Outcome {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let printable = match *self {
-            Outcome::NOTHING => "Nothing",
+            Outcome::PUNISH => "Punish",
             Outcome::SUCKER => "Sucker",
             Outcome::REWARD => "Reward",
             Outcome::TEMPTATION => "Temptation",

@@ -137,65 +137,24 @@ impl PlayerFactory {
     }
 }
 
-// fn make_player() -> dyn Player {}
-
-// #[derive(Clone, Debug)]
-// struct Personality {
-//     memory: Memory,
-// }
-
-// #[derive(Clone, Debug)]
-// struct Memory {
-//     last_move: Choice,
-//     betrayed: Cell<i16>,
-// }
-
-// trait Choose {
-//     fn choose(&self, opp: Entity) -> Choice;
-// }
-
-// pub struct AlwaysCooperate {
-//     entity: Entity,
-// }
-
-// impl Choose for AlwaysCooperate {
-//     fn choose(&self, opp: Entity) -> Choice {
-//         Choice::COOPERATE
-//     }
-// }
-
-// // pub fn new() -> Entity {
-// //     let e = Entity {
-// //         name: FirstName().fake(),
-// //         score: Cell::new(0),
-// //         personality: Personality {
-// //             memory: Memory {
-// //                 last_move: Choice::COOPERATE,
-// //                 betrayed: Cell::new(0),
-// //             },
-// //         },
-// //     };
-// //     e
-// // }
-
-// // impl Entity {
-// //     pub fn get_name(&self) -> String {
-// //         self.name.to_string()
-// //     }
-
-// //     fn get_score(&self) -> u8 {
-// //         self.score.get()
-// //     }
-
-// //     pub fn record_result(&self, o: Outcome) {
-// //         self.score.set(self.score.get() + o.as_u8())
-// //     }
-// // }
-
 // For printing outcomes
 impl fmt::Display for Entity {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let output = format!("{}: {}", self.name, self.get_score());
+        let output = format!("\t{}\t{}", self.get_name(), self.get_score());
+        write!(f, "{}", output)
+    }
+}
+
+impl fmt::Display for dyn Player {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Create the table
+        let e = self.get_entity();
+        let output = format!(
+            "[{}]\t{}\t{}",
+            self.get_behavior(),
+            e.get_name(),
+            e.get_score()
+        );
         write!(f, "{}", output)
     }
 }

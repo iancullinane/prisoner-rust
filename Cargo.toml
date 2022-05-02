@@ -9,6 +9,7 @@ edition = "2021"
 rand = "0.8.3"
 clap = { version = "3.1.12", features = ["derive"] }
 fake = "2.4"
+prettytable-rs = "0.8.0"
 
 [lib]
 name = "prisoner"
