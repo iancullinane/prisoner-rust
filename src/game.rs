@@ -14,16 +14,5 @@ impl Game {
         &mut self.players
     }
 
-    // pub fn get_players(&self) -> Vec<entity::Entity> {
-    //     self.players.
-    // }
 
-    // fn get_outcome(&self) -> Outcome {
-    //     let random_number = rand::thread_rng().gen_range(1..101);
-    //     match random_number.cmp(&MIDDLE) {
-    //         Ordering::Less => Outcome::COOOPERATE,
-    //         Ordering::Greater => Outcome::CHEAT,
-    //         Ordering::Equal => self.get_outcome(),
-    //     }
-    // }
 }
