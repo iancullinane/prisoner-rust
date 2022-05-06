@@ -7,4 +7,4 @@ RUN cargo install --path .
 
 RUN chmod +x target/release/prisoner
 
-CMD ["prisoner"]
+CMD ["target/release"]
