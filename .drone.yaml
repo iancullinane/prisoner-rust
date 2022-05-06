@@ -1,0 +1,18 @@
+kind: pipeline
+name: default
+
+steps:
+  - name: publish-ecr
+    image: plugins/ecr
+    settings:
+      access_key:
+        from_secret: sheeta_aws_key
+      secret_key:
+        from_secret: sheeta_aws_secret
+      repo: adventurebrave.com
+      dockerfile: Dockerfile
+      region: us-east-2
+      registry: 208744038881.dkr.ecr.us-east-2.amazonaws.com
+      tags:
+        - ${DRONE_COMMIT_SHA}
+        - lambda-version
