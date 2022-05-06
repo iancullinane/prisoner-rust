@@ -4,7 +4,12 @@ name: default
 steps:
   - name: docker  
     image: plugins/docker
+    environment:
+      DOCKER_TOKEN:
+        from_secret: d_token
     settings:
+      config: 
+        from_secret: docker-auth
       username: 
         from_secret: dh-username
       password: 
@@ -13,18 +18,3 @@ steps:
       tags: 
         - ${DRONE_COMMIT_SHA}
         - latest
-
-  - name: publish-ecr
-    image: plugins/ecr
-    settings:
-      access_key:
-        from_secret: sheeta_aws_key
-      secret_key:
-        from_secret: sheeta_aws_secret
-      repo: adventurebrave.com
-      dockerfile: Dockerfile
-      region: us-east-2
-      registry: 208744038881.dkr.ecr.us-east-2.amazonaws.com
-      tags:
-        - ${DRONE_COMMIT_SHA}
-        - lambda-version
