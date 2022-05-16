@@ -1,10 +1,35 @@
-FROM rust:1
+# Create the build container to compile the hello world program
+FROM rust:1 as builder
 
-WORKDIR /usr/src/prisoner
-COPY . .
+ENV USER=prisoner
+ENV UID=10001
 
-RUN cargo install --path .
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "/nonexistent" \
+    --shell "/sbin/nologin" \
+    --no-create-home \
+    --uid "${UID}" \
+    "${USER}"
 
+WORKDIR /prisoner
+USER ${USER}
+COPY ./ .
+
+RUN cargo build  --release
 RUN chmod +x target/release/prisoner
 
-CMD ["target/release"]
+CMD ["ls","-la", "target"]
+
+# # Create the execution container by copying the compiled hello world to it and running it
+# FROM scratch
+
+
+# Import from builder.
+# COPY --from=builder /etc/passwd /etc/passwd
+# COPY --from=builder /etc/group /etc/group
+
+# COPY --from=builder /prisoner/target/release/prisoner ./
+# USER prisoner:prisoner
+# CMD ["/prisoner"]
