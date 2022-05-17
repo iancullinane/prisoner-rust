@@ -3,12 +3,12 @@ name: default
 
 steps:
 
-  - name: build
-    image: eignhpants/image-builder
-    environment:
-    commands:
-      - ./build/build.sh
-      # - bin/main -t $DISCORD_TOKEN -b create
+  # - name: build
+  #   image: eignhpants/image-builder
+  #   environment:
+  #   commands:
+  #     - ./build/build.sh
+  #     # - bin/main -t $DISCORD_TOKEN -b create
 
   - name: docker  
     image: plugins/docker

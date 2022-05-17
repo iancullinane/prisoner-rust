@@ -1,35 +1,30 @@
-# Create the build container to compile the hello world program
-FROM rust:1 as builder
+FROM rust:1 as build
 
-ENV USER=prisoner
-ENV UID=10001
-
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/nonexistent" \
-    --shell "/sbin/nologin" \
-    --no-create-home \
-    --uid "${UID}" \
-    "${USER}"
-
+# create a new empty shell project
+RUN USER=root cargo new --bin prisoner
 WORKDIR /prisoner
-USER ${USER}
-COPY ./ .
 
-RUN cargo build  --release
-RUN chmod +x target/release/prisoner
+# copy over your manifests
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./Cargo.toml ./Cargo.toml
 
-CMD ["ls","-la", "target"]
+# this build step will cache your dependencies
+RUN cargo build --release
+RUN rm src/*.rs
 
-# # Create the execution container by copying the compiled hello world to it and running it
-# FROM scratch
+# copy your source tree
+COPY ./src ./src
 
+# build for release
+RUN rm ./target/release/deps/prisoner*
+RUN cargo build --release
 
-# Import from builder.
-# COPY --from=builder /etc/passwd /etc/passwd
-# COPY --from=builder /etc/group /etc/group
+# our final base
+FROM rust:1
 
-# COPY --from=builder /prisoner/target/release/prisoner ./
-# USER prisoner:prisoner
-# CMD ["/prisoner"]
+# copy the build artifact from the build stage
+COPY --from=build /prisoner/target/release/prisoner .
+
+# set the startup command to run your binary
+ENTRYPOINT ["./prisoner"]
+CMD ["--players", "3", "--rounds", "0"]
