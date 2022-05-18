@@ -1,15 +1,14 @@
-#[macro_use]
-extern crate prettytable;
 use prettytable::{format, Cell as tCell, Row, Table};
 use std::cmp::Eq;
 use std::fmt;
+
+#[macro_use]
+extern crate prettytable;
 
 pub mod entity;
 pub mod game;
 
 use entity::PlayerFactory;
-
-pub const TITLE: &'static str = "The prisoners dilemna";
 
 // Outcome is an enum to express the reward values of the game result matrix
 // TODO::return the classic T > R > P > S representation and provide a trait
@@ -29,7 +28,7 @@ impl Outcome {
 }
 
 // Choice represents the two choices of the game
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Choice {
     CHEAT,
     COOPERATE,
