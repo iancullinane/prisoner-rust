@@ -1,3 +1,5 @@
+[![Build Status](https://cloud.drone.io/api/badges/iancullinane/prisoner-rust/status.svg)](https://cloud.drone.io/iancullinane/prisoner-rust)
+
 prisoner
 ========
 
