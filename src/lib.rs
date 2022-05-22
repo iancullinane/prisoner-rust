@@ -1,14 +1,14 @@
-use prettytable::{format, Cell as tCell, Row, Table};
+use rand::{thread_rng, Rng};
+use std::borrow::BorrowMut;
 use std::cmp::Eq;
 use std::fmt;
-
-#[macro_use]
-extern crate prettytable;
 
 pub mod entity;
 pub mod game;
 
-use entity::PlayerFactory;
+use entity::Personality;
+
+use crate::entity::Entity;
 
 // Outcome is an enum to express the reward values of the game result matrix
 // TODO::return the classic T > R > P > S representation and provide a trait
@@ -22,8 +22,8 @@ pub enum Outcome {
 }
 
 impl Outcome {
-    pub fn as_i16(&self) -> i16 {
-        *self as i16
+    pub fn as_i32(&self) -> i32 {
+        *self as i32
     }
 }
 
@@ -34,38 +34,27 @@ pub enum Choice {
     COOPERATE,
 }
 
+pub fn new_game(players: i32) -> game::Game<Entity> {
+    println!("New game for {} players", players);
+    let mut rng = thread_rng();
+    let mut new_game: game::Game<Entity> = game::Game {
+        name: String::from("Test Game"),
+        players: vec![],
+    };
+
+    for _ in 0..players {
+        let tmp = Entity::new_player(rng.gen::<Personality>());
+        new_game.add_player(tmp);
+    }
+    new_game
+}
+
 // play_game determines what kind of game to play
 // TODO::more modes
-pub fn play_game(mut game: game::Game, rounds: i16) {
+pub fn play_game<E: entity::Player>(mut game: game::Game<E>, rounds: i16) {
     let players = game.get_players();
-    if rounds == 0 {
-        play_round_robin(players);
-    } else {
-        play_tournament(players, rounds)
-    }
 
     print_result(players);
-}
-
-// play_tournament will pit every member of a group against each other in
-// a round robin n number of times
-fn play_tournament(players: &mut Vec<Box<dyn entity::Player>>, rounds: i16) {
-    for _ in 0..rounds {
-        play_round_robin(players);
-    }
-}
-
-// play_round_robin will pit every member of a group against each other once
-fn play_round_robin(players: &mut Vec<Box<dyn entity::Player>>) {
-    for i in 0..players.len() {
-        if i + 1 == players.len() {
-            return;
-        }
-        if players[i].get_name() == players[i + 1].get_name() {
-            continue;
-        }
-        play_round(&players[i], &players[i + 1])
-    }
 }
 
 // At the heart of the prisoners dilemma is the choice between two players
@@ -90,97 +79,8 @@ fn determine(m1: &Choice, m2: &Choice) -> (Outcome, Outcome) {
     }
 }
 
-pub fn play_round(player_one: &Box<dyn entity::Player>, player_two: &Box<dyn entity::Player>) {
-    let m1 = player_one.choose();
-    let m2 = player_two.choose();
-
-    let (o1, o2) = determine(&m1, &m2);
-
-    player_one.get_entity().record_result(o1);
-    player_two.get_entity().record_result(o2);
-}
-
-fn print_outcome(
-    player_one: &Box<dyn entity::Player>,
-    player_two: &Box<dyn entity::Player>,
-    o1: Outcome,
-    o2: Outcome,
-) {
-    let mut table = Table::new();
-
-    // Add a row per time
-    table.add_row(row!["Name", "Behavior", "Result"]);
-    table.add_row(Row::new(vec![
-        tCell::new(&player_one.get_name()),
-        tCell::new(&player_one.get_behavior()),
-        tCell::new(&o1.to_string()),
-    ]));
-    table.add_row(Row::new(vec![
-        tCell::new(&player_two.get_name()),
-        tCell::new(&player_two.get_behavior()),
-        tCell::new(&o2.to_string()),
-    ]));
-    table.printstd();
-}
-
-pub fn new_game(players: i32) -> game::Game {
-    let mut r = game::Game {
-        name: "Test Game".to_string(),
-        players: Vec::new(),
-    };
-
-    for _ in 0..players {
-        let tmp = PlayerFactory::get_player();
-        r.players.push(tmp)
-    }
-
-    r
-}
-
-pub fn print_result(players: &Vec<Box<dyn entity::Player>>) {
-    let mut table = Table::new();
-
-    // Add a row per time
-    table.add_row(row!["Behavior", "Name", "Score"]);
-    for p in players {
-        table.add_row(Row::new(vec![
-            tCell::new(&p.get_behavior()),
-            tCell::new(&p.get_name()),
-            tCell::new(&p.get_entity().get_score().to_string()),
-        ]));
-    }
-
-    let format = format::FormatBuilder::new()
-        .column_separator('|')
-        .borders('|')
-        .separators(
-            &[format::LinePosition::Top, format::LinePosition::Bottom],
-            format::LineSeparator::new('-', '+', '+', '+'),
-        )
-        .padding(1, 1)
-        .build();
-    table.set_format(format);
-    table.printstd();
-}
-// For printing outcomes
-impl fmt::Display for Choice {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let printable = match *self {
-            Choice::CHEAT => 'X',
-            Choice::COOPERATE => '0',
-        };
-        write!(f, "{}", printable)
-    }
-}
-
-impl fmt::Display for Outcome {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let printable = match *self {
-            Outcome::PUNISH => "Punish",
-            Outcome::SUCKER => "Sucker",
-            Outcome::REWARD => "Reward",
-            Outcome::TEMPTATION => "Temptation",
-        };
-        write!(f, "{}", printable)
+pub fn print_result(players: &[impl entity::Player]) {
+    for p in players.iter() {
+        println!("{}", p)
     }
 }
