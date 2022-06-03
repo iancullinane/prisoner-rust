@@ -47,9 +47,6 @@ pub struct Entity {
     personality_type: Personality,
 }
 
-// https://github.com/mre/idiomatic-rust
-// https://github.com/brson/rust-anthology/tree/master/src
-
 impl Entity {
     pub fn new(p: Personality) -> Self {
         Self {
@@ -106,7 +103,9 @@ fn choose(p: &Personality, m: &Memory) -> Choice {
 // most notably the players behavior implementation
 pub trait Player: fmt::Display {
     fn choose(&self) -> Choice;
+    // fn play<opp: Player>(&self, opp: &opp) -> (Outcome, Outcome);
     fn record_result(&mut self, o: Outcome);
+    fn add_played_for_round(self, name: String);
     fn get_name(&self) -> &str;
 }
 
@@ -117,6 +116,10 @@ impl Player for Entity {
 
     fn record_result(&mut self, o: Outcome) {
         self.score += o.as_i32();
+    }
+
+    fn add_played_for_round(mut self, name: String) {
+        self.get_memory().get_curr_round().push(name)
     }
 
     fn get_name(&self) -> &str {
@@ -131,6 +134,7 @@ pub struct Memory {
     opp_last_move: Choice,
     last_move: Choice,
     betrayed: Cell<i16>,
+    curr_round: Vec<String>,
 }
 
 impl Memory {
@@ -139,7 +143,11 @@ impl Memory {
             opp_last_move: Choice::COOPERATE, // everyone starts nice
             last_move: Choice::COOPERATE,     // everyone starts nice
             betrayed: Cell::new(0),
+            curr_round: Vec::new(),
         }
+    }
+    fn get_curr_round(&mut self) -> &mut Vec<String> {
+        &mut self.curr_round
     }
 }
 

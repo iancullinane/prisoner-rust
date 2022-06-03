@@ -14,7 +14,10 @@ impl<E: entity::Player> Game<E> {
         self.players.push(player)
     }
 
-    pub fn get_players(&mut self) -> &mut Vec<impl entity::Player> {
-        &mut self.players
+    pub fn get_players(self) -> Vec<impl entity::Player> {
+        self.players
     }
 }
+
+// fn build_group(players: &mut Vec<impl entity::Player>
+// )
