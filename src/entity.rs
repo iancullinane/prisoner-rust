@@ -101,9 +101,9 @@ fn choose(p: &Personality, m: &Memory) -> Choice {
 
 // Player is the trait to repesent a player of the game
 // most notably the players behavior implementation
-pub trait Player: fmt::Display {
+pub trait Player: fmt::Display + std::clone::Clone {
     fn choose(&self) -> Choice;
-    // fn play<opp: Player>(&self, opp: &opp) -> (Outcome, Outcome);
+    // fn play<Player>(&self, opp: &Player) -> (Outcome, Outcome);
     fn record_result(&mut self, o: Outcome);
     fn add_played_for_round(self, name: String);
     fn get_name(&self) -> &str;
