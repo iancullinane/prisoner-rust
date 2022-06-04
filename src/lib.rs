@@ -1,3 +1,4 @@
+use block_id::{Alphabet, BlockId};
 use rand::{thread_rng, Rng};
 use std::cmp::Eq;
 
@@ -12,7 +13,7 @@ use crate::entity::Player;
 // Outcome is an enum to express the reward values of the game result matrix
 // TODO::return the classic T > R > P > S representation and provide a trait
 // to implement the reward values
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Outcome {
     PUNISH = 0,
     SUCKER = -1,
@@ -51,8 +52,11 @@ pub enum Choice {
 pub fn make_players(num: i32) -> Vec<entity::Entity> {
     let mut player_gen = Vec::new();
     let mut rng = thread_rng();
+    let length = 5;
+    let seed = 0o152;
+    let generator = BlockId::new(Alphabet::alphanumeric(), seed, length);
     for _ in 0..num {
-        let tmp = Entity::new_player(rng.gen::<Personality>());
+        let tmp = Entity::new_player(rng.gen::<Personality>(), generator.encode_string(rng.gen()));
         player_gen.push(tmp);
     }
     player_gen
@@ -60,24 +64,20 @@ pub fn make_players(num: i32) -> Vec<entity::Entity> {
 
 // play_game determines what kind of game to play
 // TODO::more modes
-pub fn play_game<E: entity::Player>(game: game::Game<E>, rounds: i16) {
-    play_round_robin(game.get_players());
+pub fn play_game(players: Vec<impl entity::Player>, _rounds: i16) {
+    play_round_robin(players);
 }
 
 pub fn play_round_robin(players: Vec<impl entity::Player>) {
     let mut opponents = players.clone();
-    // play_round_robin(players);
-    // print_result(players);
-    let mut game_log = Vec::<String>::new();
+    let mut game_log = Vec::<(Outcome, Outcome)>::new();
     for player in &players {
         opponents.retain(|opp| opp.get_name() != player.get_name());
-        opponents
-            .iter()
-            .for_each(|o| game_log.push(format!("{} plays {}", player.get_name(), o.get_name())));
+        opponents.iter().for_each(|o| game_log.push(player.play(o)));
     }
 
     for l in &game_log {
-        println!("{}", l)
+        println!("{:?}", l)
     }
 }
 
@@ -94,7 +94,7 @@ pub fn once(player_one: Entity, player_two: Entity) {
 // At the heart of the prisoners dilemma is the choice between two players
 // they can choose to COOPERATE or CHEAT (or BETRAY, etc). The possible outcomes
 // can be found here: https://en.wikipedia.org/wiki/Prisoner%27s_dilemma
-fn determine(m1: Choice, m2: Choice) -> (Outcome, Outcome) {
+pub fn determine(m1: Choice, m2: Choice) -> (Outcome, Outcome) {
     match m1 {
         Choice::COOPERATE => {
             if m1 == m2 {

@@ -1,5 +1,4 @@
 use clap::Parser;
-use rand::{thread_rng, Rng};
 
 // use crate::entity::{Entity, Player};
 // https://brson.github.io/rust-anthology/1/effectively-using-iterators.html
@@ -19,9 +18,11 @@ struct Args {
 }
 
 fn main() {
+    // clap
     let args = Args::parse();
-    let players = prisoner::make_players(args.players);
 
+    let players = prisoner::make_players(args.players);
+    prisoner::play_game(players, args.rounds.unwrap_or(1));
     // let players: Vec<entity::Entity> = (0..args.players)
     //     .map(|_x| Entity::new(rng.gen::<Personality>()))
     //     .collect();

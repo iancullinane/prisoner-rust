@@ -4,12 +4,14 @@ use rand::Rng;
 use std::cell::Cell;
 use std::fmt;
 
+use crate::determine;
 use crate::entity;
 use crate::Choice;
 use crate::Outcome;
-use tabled::{Table, Tabled};
 
+use block_id::{Alphabet, BlockId};
 use rand::distributions::{Distribution, Standard};
+use tabled::{Table, Tabled};
 
 // Define the types of personalities, actual decisions handled by `choose()`
 #[derive(Clone, Copy, Debug)]
@@ -42,31 +44,33 @@ impl Distribution<Personality> for Standard {
 pub struct Entity {
     // TODO::Generate short id's https://github.com/drifting-in-space/block-id
     name: String,
+    tag: String,
     score: i32,
     memory: Memory,
     personality_type: Personality,
 }
 
 impl Entity {
-    pub fn new(p: Personality) -> Self {
+    pub fn new(p: Personality, tag: String) -> Self {
         Self {
             name: FirstName().fake(),
             score: 0,
             memory: Memory::new(),
             personality_type: p,
+            tag,
         }
     }
 
-    pub fn new_player(p: Personality) -> Entity {
-        Entity::new(p)
+    pub fn new_player(p: Personality, t: String) -> Entity {
+        Entity::new(p, t)
     }
-
-    // pub fn get_name(&self) -> String {
-    //     self.name.to_string()
-    // }
 
     pub fn get_score(&self) -> i32 {
         self.score
+    }
+
+    pub fn get_tag(&self) -> &str {
+        self.tag.as_str()
     }
 
     pub fn get_memory(&mut self) -> &mut Memory {
@@ -103,6 +107,7 @@ fn choose(p: &Personality, m: &Memory) -> Choice {
 // most notably the players behavior implementation
 pub trait Player: fmt::Display + std::clone::Clone {
     fn choose(&self) -> Choice;
+    fn play(&self, other: &Self) -> (Outcome, Outcome);
     fn record_result(&mut self, o: Outcome);
     fn add_played_for_round(self, name: String);
     fn get_name(&self) -> &str;
@@ -111,6 +116,10 @@ pub trait Player: fmt::Display + std::clone::Clone {
 impl Player for Entity {
     fn choose(&self) -> Choice {
         choose(&self.personality_type, &self.memory)
+    }
+
+    fn play(&self, other: &Self) -> (Outcome, Outcome) {
+        determine(self.choose(), other.choose())
     }
 
     fn record_result(&mut self, o: Outcome) {
@@ -166,6 +175,12 @@ impl fmt::Display for Entity {
             self.get_personality_type()
         );
         write!(f, "{}", output)
+    }
+}
+
+impl fmt::Display for Choice {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 
