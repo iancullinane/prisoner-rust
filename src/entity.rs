@@ -4,10 +4,10 @@ use rand::Rng;
 use std::cell::Cell;
 use std::fmt;
 
-use tabled::{Table, Tabled};
-
+use crate::entity;
 use crate::Choice;
 use crate::Outcome;
+use tabled::{Table, Tabled};
 
 use rand::distributions::{Distribution, Standard};
 
@@ -103,7 +103,6 @@ fn choose(p: &Personality, m: &Memory) -> Choice {
 // most notably the players behavior implementation
 pub trait Player: fmt::Display + std::clone::Clone {
     fn choose(&self) -> Choice;
-    // fn play<Player>(&self, opp: &Player) -> (Outcome, Outcome);
     fn record_result(&mut self, o: Outcome);
     fn add_played_for_round(self, name: String);
     fn get_name(&self) -> &str;

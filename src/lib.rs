@@ -1,8 +1,5 @@
 use rand::{thread_rng, Rng};
-use std::borrow::BorrowMut;
 use std::cmp::Eq;
-use std::fmt;
-use std::iter;
 
 pub mod entity;
 pub mod game;
@@ -36,19 +33,29 @@ pub enum Choice {
     COOPERATE,
 }
 
-pub fn new_game(players: i32) -> game::Game<Entity> {
-    println!("New game for {} players", players);
-    let mut rng = thread_rng();
-    let mut new_game: game::Game<Entity> = game::Game {
-        name: String::from("Test Game"),
-        players: vec![],
-    };
+// pub fn new_game(players: i32) -> game::Game<Entity> {
+//     // println!("New game for {} players", players);
+//     let mut rng = thread_rng();
+//     let mut new_game: game::Game<Entity> = game::Game {
+//         name: String::from("Test Game"),
+//         players: vec![],
+//     };
 
-    for _ in 0..players {
+//     for _ in 0..players {
+//         let tmp = Entity::new_player(rng.gen::<Personality>());
+//         new_game.add_player(tmp);
+//     }
+//     new_game
+// }
+
+pub fn make_players(num: i32) -> Vec<entity::Entity> {
+    let mut player_gen = Vec::new();
+    let mut rng = thread_rng();
+    for _ in 0..num {
         let tmp = Entity::new_player(rng.gen::<Personality>());
-        new_game.add_player(tmp);
+        player_gen.push(tmp);
     }
-    new_game
+    player_gen
 }
 
 // play_game determines what kind of game to play
