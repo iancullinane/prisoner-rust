@@ -15,17 +15,28 @@ use crate::entity::Player;
 // to implement the reward values
 #[derive(Copy, Clone, Debug)]
 pub enum Outcome {
-    PUNISH = 0,
-    SUCKER = -1,
-    REWARD = 2,
-    TEMPTATION = 3,
+    PUNISH,
+    SUCKER,
+    REWARD,
+    TEMPTATION,
 }
 
 impl Outcome {
-    pub fn as_i32(&self) -> i32 {
-        *self as i32
+    fn positive_scoring(o: Outcome) -> i8 {
+        match o {
+            Outcome::PUNISH => 0,
+            Outcome::SUCKER => -1,
+            Outcome::REWARD => 2,
+            Outcome::TEMPTATION => 3,
+        }
     }
 }
+
+// impl Outcome {
+//     pub fn as_i32(&self) -> i32 {
+//         *self as i32
+//     }
+// }
 
 // Choice represents the two choices of the game
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -33,21 +44,6 @@ pub enum Choice {
     CHEAT,
     COOPERATE,
 }
-
-// pub fn new_game(players: i32) -> game::Game<Entity> {
-//     // println!("New game for {} players", players);
-//     let mut rng = thread_rng();
-//     let mut new_game: game::Game<Entity> = game::Game {
-//         name: String::from("Test Game"),
-//         players: vec![],
-//     };
-
-//     for _ in 0..players {
-//         let tmp = Entity::new_player(rng.gen::<Personality>());
-//         new_game.add_player(tmp);
-//     }
-//     new_game
-// }
 
 pub fn make_players(num: i32) -> Vec<entity::Entity> {
     let mut player_gen = Vec::new();
@@ -71,24 +67,25 @@ pub fn play_game(players: Vec<impl entity::Player>, _rounds: i16) {
 pub fn play_round_robin(players: Vec<impl entity::Player>) {
     let mut opponents = players.clone();
     let mut game_log = Vec::<(Outcome, Outcome)>::new();
-    for player in &players {
+    for player in players {
         opponents.retain(|opp| opp.get_name() != player.get_name());
+        // opponents.iter().for_each(|o| once(player, o));
         opponents.iter().for_each(|o| game_log.push(player.play(o)));
     }
 
     for l in &game_log {
-        println!("{:?}", l)
+        println! {"{:?}", l}
     }
 }
 
-pub fn once(player_one: Entity, player_two: Entity) {
+pub fn once(player_one: impl Player, player_two: impl Player) {
     let m1 = player_one.choose();
     let m2 = player_two.choose();
 
-    determine(m1, m2);
+    let outcome = determine(m1, m2);
 
-    // player_one.record_result(o1);
-    // player_two.record_result(o2);
+    // player_one.score(outcome.0);
+    // player_two.score(outcome.1);
 }
 
 // At the heart of the prisoners dilemma is the choice between two players
@@ -118,3 +115,18 @@ pub fn print_result(players: &[impl entity::Player]) {
         println!("{}", p)
     }
 }
+
+// pub fn new_game(players: i32) -> game::Game<Entity> {
+//     // println!("New game for {} players", players);
+//     let mut rng = thread_rng();
+//     let mut new_game: game::Game<Entity> = game::Game {
+//         name: String::from("Test Game"),
+//         players: vec![],
+//     };
+
+//     for _ in 0..players {
+//         let tmp = Entity::new_player(rng.gen::<Personality>());
+//         new_game.add_player(tmp);
+//     }
+//     new_game
+// }

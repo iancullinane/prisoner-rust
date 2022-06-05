@@ -108,9 +108,11 @@ fn choose(p: &Personality, m: &Memory) -> Choice {
 pub trait Player: fmt::Display + std::clone::Clone {
     fn choose(&self) -> Choice;
     fn play(&self, other: &Self) -> (Outcome, Outcome);
-    fn record_result(&mut self, o: Outcome);
+    // fn record_result(&mut self, o: Outcome);
     fn add_played_for_round(self, name: String);
     fn get_name(&self) -> &str;
+    fn score(&mut self, o: Outcome);
+    fn get_score(&self) -> i32;
 }
 
 impl Player for Entity {
@@ -122,8 +124,12 @@ impl Player for Entity {
         determine(self.choose(), other.choose())
     }
 
-    fn record_result(&mut self, o: Outcome) {
-        self.score += o.as_i32();
+    fn get_score(&self) -> i32 {
+        self.score
+    }
+
+    fn score(&mut self, o: Outcome) {
+        self.score += Outcome::positive_scoring(o) as i32;
     }
 
     fn add_played_for_round(mut self, name: String) {
