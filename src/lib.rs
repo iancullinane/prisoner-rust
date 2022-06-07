@@ -7,8 +7,7 @@ pub mod game;
 
 use entity::Personality;
 
-use crate::entity::Entity;
-use crate::entity::Player;
+use crate::entity::{Entity, Player};
 
 // Outcome is an enum to express the reward values of the game result matrix
 // TODO::return the classic T > R > P > S representation and provide a trait
@@ -21,6 +20,8 @@ pub enum Outcome {
     TEMPTATION,
 }
 
+// TODO::Implement scoring types as enums?
+// TODO::Handle other types like algebraic (ie "P","R","S","T")
 impl Outcome {
     fn positive_scoring(o: &Outcome) -> i8 {
         match o {
@@ -32,12 +33,6 @@ impl Outcome {
     }
 }
 
-// impl Outcome {
-//     pub fn as_i32(&self) -> i32 {
-//         *self as i32
-//     }
-// }
-
 // Choice represents the two choices of the game
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Choice {
@@ -45,6 +40,7 @@ pub enum Choice {
     COOPERATE,
 }
 
+// make_players will assemble a Vector of basic entities
 pub fn make_players(num: i32) -> Vec<entity::Entity> {
     let mut player_gen = Vec::new();
     let mut rng = thread_rng();
@@ -66,22 +62,15 @@ pub fn play_game(players: &mut Vec<impl entity::Player>, _rounds: i16) {
 
 pub fn play_round_robin(players: &mut Vec<impl entity::Player>) {
     let mut opponents = players.clone();
-    let mut game_log = Vec::<(Outcome, Outcome)>::new();
     for player in players {
-        opponents.retain(|opp| opp.get_name() != player.get_name());
-        opponents
-            .iter_mut()
-            .for_each(|o| game_log.push(player.play(o)));
-    }
-
-    for _l in &game_log {
-        // println! {"{:?}", l}
+        opponents.retain(|opp| opp.name() != player.name());
+        opponents.iter_mut().for_each(|o| player.play(o));
     }
 }
 
 pub fn once(player_one: impl Player, player_two: impl Player) {
-    let m1 = player_one.choose();
-    let m2 = player_two.choose();
+    let m1 = player_one.choose(player_two.tag());
+    let m2 = player_two.choose(player_one.tag());
 }
 
 // At the heart of the prisoners dilemma is the choice between two players

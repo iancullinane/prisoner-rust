@@ -1,12 +1,13 @@
-use fake::faker::name::en::*;
-use fake::Fake;
 use rand::Rng;
 use std::cell::Cell;
+use std::collections::HashMap;
 use std::fmt;
 
-use crate::determine;
 use crate::Choice;
 use crate::Outcome;
+use crate::{determine, once};
+use fake::faker::name::en::*;
+use fake::Fake;
 
 use rand::distributions::{Distribution, Standard};
 use tabled::{Table, Tabled};
@@ -87,13 +88,13 @@ fn choose(p: &Personality, m: &Memory) -> Choice {
         Personality::AlwaysCheat => Choice::CHEAT,
         Personality::CopyCat => m.opp_last_move,
         Personality::Vengeful => {
-            if m.betrayed.get() > 1 {
+            if m.betrayed() > 1 {
                 return Choice::CHEAT;
             }
             Choice::COOPERATE
         }
         Personality::SlowLearner => {
-            if m.betrayed.get() > 5 {
+            if m.betrayed() > 5 {
                 return Choice::CHEAT;
             }
             Choice::COOPERATE
@@ -104,41 +105,46 @@ fn choose(p: &Personality, m: &Memory) -> Choice {
 // Player is the trait to repesent a player of the game
 // most notably the players behavior implementation
 pub trait Player: fmt::Display + std::clone::Clone {
-    fn choose(&self) -> Choice;
-    fn play(&mut self, other: &mut Self) -> (Outcome, Outcome);
-    // fn record_result(&mut self, o: Outcome);
-    fn add_played_for_round(self, name: String);
-    fn get_name(&self) -> &str;
-    fn score(&mut self, o: &Outcome);
-    fn get_score(&self) -> i32;
+    fn choose(&self, opp_tag: &str) -> Choice;
+    fn play(&mut self, other: &mut Self);
+    fn name(&self) -> &str;
+    fn score_outcome(&mut self, o: &Outcome);
+    fn score(&self) -> i32;
+    fn tag(&self) -> &str;
+    fn add_memory(&mut self, tag: &str, other: &Outcome);
 }
 
 impl Player for Entity {
-    fn choose(&self) -> Choice {
+    fn choose(&self, opp_tag: &str) -> Choice {
         choose(&self.personality_type, &self.memory)
     }
 
-    fn play(&mut self, other: &mut Self) -> (Outcome, Outcome) {
-        let (o1, o2) = determine(self.choose(), other.choose());
-        self.score(&o1);
-        other.score(&o2);
-        (o1, o2)
+    fn play(&mut self, other: &mut Self) {
+        let (o1, o2) = determine(self.choose(other.tag()), other.choose(self.tag()));
+        self.score_outcome(&o1);
+        other.score_outcome(&o2);
+        self.add_memory(other.tag(), &o2);
+        other.add_memory(self.tag(), &o1);
     }
 
-    fn get_score(&self) -> i32 {
+    fn score(&self) -> i32 {
         self.score
     }
 
-    fn score(&mut self, o: &Outcome) {
+    fn add_memory(&mut self, tag: &str, other: &Outcome) {
+        let m = self.get_memory();
+    }
+
+    fn score_outcome(&mut self, o: &Outcome) {
         self.score += Outcome::positive_scoring(o) as i32;
     }
 
-    fn add_played_for_round(mut self, name: String) {
-        self.get_memory().get_curr_round().push(name)
+    fn name(&self) -> &str {
+        self.name.as_str()
     }
 
-    fn get_name(&self) -> &str {
-        self.name.as_str()
+    fn tag(&self) -> &str {
+        self.tag.as_str()
     }
 }
 
@@ -148,21 +154,27 @@ impl Player for Entity {
 pub struct Memory {
     opp_last_move: Choice,
     last_move: Choice,
-    betrayed: Cell<i16>,
-    curr_round: Vec<String>,
+    moves: Vec<Meme>,
+}
+
+#[derive(Clone, Debug)]
+struct Meme {
+    oppTag: String,
+    outcomes: Vec<Outcome>,
 }
 
 impl Memory {
     fn new() -> Self {
         Self {
             opp_last_move: Choice::COOPERATE, // everyone starts nice
-            last_move: Choice::COOPERATE,     // everyone starts nice
-            betrayed: Cell::new(0),
-            curr_round: Vec::new(),
+            last_move: Choice::COOPERATE,
+            moves: Vec::new(),
         }
     }
-    fn get_curr_round(&mut self) -> &mut Vec<String> {
-        &mut self.curr_round
+
+    fn betrayed(&self) -> i32 {
+        // self.outcomes.iter();
+        1
     }
 }
 
@@ -177,7 +189,7 @@ impl fmt::Display for Entity {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let output = format!(
             "{}\t{}\t{}",
-            self.get_name(),
+            self.name(),
             self.get_score(),
             self.get_personality_type()
         );

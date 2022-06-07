@@ -23,7 +23,6 @@ fn main() {
 
     let mut players = prisoner::make_players(args.players);
     prisoner::play_game(&mut players, args.rounds.unwrap_or(1));
-
     let output_table = Table::new(players).to_string();
     print!("{}", output_table)
 }
