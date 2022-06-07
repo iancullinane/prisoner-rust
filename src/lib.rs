@@ -22,7 +22,7 @@ pub enum Outcome {
 }
 
 impl Outcome {
-    fn positive_scoring(o: Outcome) -> i8 {
+    fn positive_scoring(o: &Outcome) -> i8 {
         match o {
             Outcome::PUNISH => 0,
             Outcome::SUCKER => -1,
@@ -60,32 +60,28 @@ pub fn make_players(num: i32) -> Vec<entity::Entity> {
 
 // play_game determines what kind of game to play
 // TODO::more modes
-pub fn play_game(players: Vec<impl entity::Player>, _rounds: i16) {
+pub fn play_game(players: &mut Vec<impl entity::Player>, _rounds: i16) {
     play_round_robin(players);
 }
 
-pub fn play_round_robin(players: Vec<impl entity::Player>) {
+pub fn play_round_robin(players: &mut Vec<impl entity::Player>) {
     let mut opponents = players.clone();
     let mut game_log = Vec::<(Outcome, Outcome)>::new();
     for player in players {
         opponents.retain(|opp| opp.get_name() != player.get_name());
-        // opponents.iter().for_each(|o| once(player, o));
-        opponents.iter().for_each(|o| game_log.push(player.play(o)));
+        opponents
+            .iter_mut()
+            .for_each(|o| game_log.push(player.play(o)));
     }
 
-    for l in &game_log {
-        println! {"{:?}", l}
+    for _l in &game_log {
+        // println! {"{:?}", l}
     }
 }
 
 pub fn once(player_one: impl Player, player_two: impl Player) {
     let m1 = player_one.choose();
     let m2 = player_two.choose();
-
-    let outcome = determine(m1, m2);
-
-    // player_one.score(outcome.0);
-    // player_two.score(outcome.1);
 }
 
 // At the heart of the prisoners dilemma is the choice between two players

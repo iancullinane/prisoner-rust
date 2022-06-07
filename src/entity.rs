@@ -5,11 +5,9 @@ use std::cell::Cell;
 use std::fmt;
 
 use crate::determine;
-use crate::entity;
 use crate::Choice;
 use crate::Outcome;
 
-use block_id::{Alphabet, BlockId};
 use rand::distributions::{Distribution, Standard};
 use tabled::{Table, Tabled};
 
@@ -107,11 +105,11 @@ fn choose(p: &Personality, m: &Memory) -> Choice {
 // most notably the players behavior implementation
 pub trait Player: fmt::Display + std::clone::Clone {
     fn choose(&self) -> Choice;
-    fn play(&self, other: &Self) -> (Outcome, Outcome);
+    fn play(&mut self, other: &mut Self) -> (Outcome, Outcome);
     // fn record_result(&mut self, o: Outcome);
     fn add_played_for_round(self, name: String);
     fn get_name(&self) -> &str;
-    fn score(&mut self, o: Outcome);
+    fn score(&mut self, o: &Outcome);
     fn get_score(&self) -> i32;
 }
 
@@ -120,15 +118,18 @@ impl Player for Entity {
         choose(&self.personality_type, &self.memory)
     }
 
-    fn play(&self, other: &Self) -> (Outcome, Outcome) {
-        determine(self.choose(), other.choose())
+    fn play(&mut self, other: &mut Self) -> (Outcome, Outcome) {
+        let (o1, o2) = determine(self.choose(), other.choose());
+        self.score(&o1);
+        other.score(&o2);
+        (o1, o2)
     }
 
     fn get_score(&self) -> i32 {
         self.score
     }
 
-    fn score(&mut self, o: Outcome) {
+    fn score(&mut self, o: &Outcome) {
         self.score += Outcome::positive_scoring(o) as i32;
     }
 
@@ -201,3 +202,40 @@ impl fmt::Display for Memory {
         write! {f, "{}", String::from("Memories")}
     }
 }
+
+// Example of newtype pattern
+// struct PlayerList(pub Vec<Entity>);
+// impl fmt::Display for PlayerList {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+
+//         // self.0.iter().fold(Ok(()), |result, album| {
+//         //     result.and_then(|_| writeln!(f, "{}", album))
+//         // })
+//     }
+// }
+
+// pub fn print_result(players: &Vec<Box<dyn entity::Player>>) {
+//     let mut table = Table::new();
+
+//     // Add a row per time
+//     table.add_row(row!["Behavior", "Name", "Score"]);
+//     for p in players {
+//         table.add_row(Row::new(vec![
+//             tCell::new(&p.get_behavior()),
+//             tCell::new(&p.get_name()),
+//             tCell::new(&p.get_entity().get_score().to_string()),
+//         ]));
+//     }
+
+//     let format = format::FormatBuilder::new()
+//         .column_separator('|')
+//         .borders('|')
+//         .separators(
+//             &[format::LinePosition::Top, format::LinePosition::Bottom],
+//             format::LineSeparator::new('-', '+', '+', '+'),
+//         )
+//         .padding(1, 1)
+//         .build();
+//     table.set_format(format);
+//     table.printstd();
+// }

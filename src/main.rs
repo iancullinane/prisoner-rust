@@ -1,5 +1,5 @@
 use clap::Parser;
-
+use tabled::Table;
 // use crate::entity::{Entity, Player};
 // https://brson.github.io/rust-anthology/1/effectively-using-iterators.html
 // https://github.com/mre/idiomatic-rust
@@ -21,19 +21,11 @@ fn main() {
     // clap
     let args = Args::parse();
 
-    let players = prisoner::make_players(args.players);
-    prisoner::play_game(players, args.rounds.unwrap_or(1));
-    // let players: Vec<entity::Entity> = (0..args.players)
-    //     .map(|_x| Entity::new(rng.gen::<Personality>()))
-    //     .collect();
+    let mut players = prisoner::make_players(args.players);
+    prisoner::play_game(&mut players, args.rounds.unwrap_or(1));
 
-    // for _ in 0..args.players {
-    //     let tmp = Entity::new_player(rng.gen::<Personality>());
-    //     // new_game.add_player(tmp);
-    // }
-    // let game = prisoner::new_game(args.players);
-    // println!("{}", game.get_name());
-    // prisoner::play_game(game, args.rounds.unwrap_or(0));
+    let output_table = Table::new(players).to_string();
+    print!("{}", output_table)
 }
 
 // fn make_entities(n: i32) -> Vec<entity::Entity> {
