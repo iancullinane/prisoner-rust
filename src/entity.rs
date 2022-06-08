@@ -1,16 +1,16 @@
 use rand::Rng;
-use std::cell::Cell;
+// use std::cell::Cell;
 use std::collections::HashMap;
 use std::fmt;
 
+use crate::determine;
 use crate::Choice;
 use crate::Outcome;
-use crate::{determine, once};
 use fake::faker::name::en::*;
 use fake::Fake;
 
 use rand::distributions::{Distribution, Standard};
-use tabled::{Table, Tabled};
+use tabled::Tabled;
 
 // Define the types of personalities, actual decisions handled by `choose()`
 #[derive(Clone, Copy, Debug)]
@@ -120,22 +120,45 @@ impl Player for Entity {
     }
 
     fn play(&mut self, other: &mut Self) {
+        println!("{} plays {}", self.name(), other.name());
         let (o1, o2) = determine(self.choose(other.tag()), other.choose(self.tag()));
+        // println!(
+        //     "{} scored {}",
+        //     self.name(),
+        //     Outcome::positive_scoring(&o1) as i32
+        // );
+        // println!(
+        //     "{} scored {}",
+        //     other.name(),
+        //     Outcome::positive_scoring(&o2) as i32
+        // );
         self.score_outcome(&o1);
         other.score_outcome(&o2);
-        self.add_memory(other.tag(), &o2);
-        other.add_memory(self.tag(), &o1);
+        self.add_memory(other.tag(), &o1);
+        other.add_memory(self.tag(), &o2);
     }
 
     fn score(&self) -> i32 {
         self.score
     }
 
-    fn add_memory(&mut self, tag: &str, other: &Outcome) {
-        let m = self.get_memory();
+    fn add_memory(&mut self, tag: &str, outcome: &Outcome) {
+        // match self.memory.memories.get(&tag) {
+        //     Some
+        // }
     }
 
     fn score_outcome(&mut self, o: &Outcome) {
+        // println!(
+        //     "{} scored {} ",
+        //     self.name(),
+        //     Outcome::positive_scoring(o) as i32
+        // );
+        println!(
+            "Set score for {}: {}",
+            self.name(),
+            Outcome::positive_scoring(o)
+        );
         self.score += Outcome::positive_scoring(o) as i32;
     }
 
@@ -152,23 +175,17 @@ impl Player for Entity {
 // TODO::implement a lot more functions on memory
 #[derive(Clone, Debug)]
 pub struct Memory {
+    memories: HashMap<String, Vec<Outcome>>,
     opp_last_move: Choice,
     last_move: Choice,
-    moves: Vec<Meme>,
-}
-
-#[derive(Clone, Debug)]
-struct Meme {
-    oppTag: String,
-    outcomes: Vec<Outcome>,
 }
 
 impl Memory {
     fn new() -> Self {
         Self {
+            memories: HashMap::new(),
             opp_last_move: Choice::COOPERATE, // everyone starts nice
             last_move: Choice::COOPERATE,
-            moves: Vec::new(),
         }
     }
 

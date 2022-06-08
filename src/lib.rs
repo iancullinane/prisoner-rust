@@ -44,7 +44,7 @@ pub enum Choice {
 pub fn make_players(num: i32) -> Vec<entity::Entity> {
     let mut player_gen = Vec::new();
     let mut rng = thread_rng();
-    let length = 5;
+    let length = 3;
     let seed = 0o152;
     let generator = BlockId::new(Alphabet::alphanumeric(), seed, length);
     for _ in 0..num {
