@@ -1,8 +1,5 @@
 use clap::Parser;
-use tabled::style::Border;
-use tabled::{object::Rows, Modify, TableIteratorExt};
 use tabled::{Style, Table};
-// use crate::entity::{Entity, Player};
 // https://brson.github.io/rust-anthology/1/effectively-using-iterators.html
 // https://github.com/mre/idiomatic-rust
 // https://github.com/brson/rust-anthology/tree/master/src
