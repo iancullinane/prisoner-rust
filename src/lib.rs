@@ -5,6 +5,11 @@ use std::cmp::Eq;
 pub mod entity;
 use crate::entity::{Entity, Personality, Player};
 
+/// Outcome represents results of the game. There can only be these four
+/// results. Different scoring implementations of functions can be applied.
+///
+/// The scoring equation is `T > R > P > S`.
+
 // Outcome is an enum to express the reward values of the game result matrix
 // TODO::return the classic T > R > P > S representation and provide a trait
 // to implement the reward values
@@ -29,7 +34,7 @@ impl Outcome {
     }
 }
 
-// Choice represents the two choices of the game
+/// In every roound the player can only make one of two choices, CHEAT, or COOPERATE
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Choice {
     CHEAT,
@@ -96,9 +101,9 @@ fn play_round_robin(players: &mut Vec<impl entity::Player>) {
     }
 }
 
-// At the heart of the prisoners dilemma is the choice between two players
-// they can choose to COOPERATE or CHEAT (or BETRAY, etc). The possible outcomes
-// can be found here: https://en.wikipedia.org/wiki/Prisoner%27s_dilemma
+/// At the heart of the prisoners dilemma is the choice between two players
+/// they can choose to COOPERATE or CHEAT (or BETRAY, etc). The possible outcomes
+/// can be found here: https://en.wikipedia.org/wiki/Prisoner%27s_dilemma
 pub fn determine(m1: Choice, m2: Choice) -> (Outcome, Outcome) {
     match m1 {
         Choice::COOPERATE => {
