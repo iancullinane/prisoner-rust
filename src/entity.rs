@@ -1,16 +1,14 @@
-use rand::Rng;
-use std::cell::Cell;
-use std::collections::HashMap;
-use std::fmt;
-
-use crate::Choice;
-use crate::Outcome;
-use crate::{determine, once};
 use fake::faker::name::en::*;
 use fake::Fake;
-
 use rand::distributions::{Distribution, Standard};
-use tabled::{Table, Tabled};
+use rand::Rng;
+use std::cell::Cell;
+use std::fmt;
+use tabled::Tabled;
+
+use crate::determine;
+use crate::Choice;
+use crate::Outcome;
 
 // Define the types of personalities, actual decisions handled by `choose()`
 #[derive(Clone, Copy, Debug)]
@@ -41,52 +39,33 @@ impl Distribution<Personality> for Standard {
 // A concrete struct from which to base the Player trait and hold their data
 #[derive(Clone, Debug, Tabled)]
 pub struct Entity {
-    // TODO::Generate short id's https://github.com/drifting-in-space/block-id
     name: String,
+    // TODO::Generate short id's https://github.com/drifting-in-space/block-id
     tag: String,
     score: i32,
+    #[tabled(skip)]
     memory: Memory,
     personality_type: Personality,
 }
 
 impl Entity {
-    pub fn new(p: Personality, tag: String) -> Self {
+    pub fn new(personality_type: Personality, tag: String) -> Self {
         Self {
             name: FirstName().fake(),
             score: 0,
             memory: Memory::new(),
-            personality_type: p,
+            personality_type,
             tag,
         }
-    }
-
-    pub fn new_player(p: Personality, t: String) -> Entity {
-        Entity::new(p, t)
-    }
-
-    pub fn get_score(&self) -> i32 {
-        self.score
-    }
-
-    pub fn get_tag(&self) -> &str {
-        self.tag.as_str()
-    }
-
-    pub fn get_memory(&mut self) -> &mut Memory {
-        &mut self.memory
-    }
-
-    pub fn get_personality_type(&self) -> &Personality {
-        &self.personality_type
     }
 }
 
 // Choose parses all personalities
-fn choose(p: &Personality, m: &Memory) -> Choice {
+fn choose(p: &Personality, m: &Memory, _opp_tag: &str) -> Choice {
     match p {
         Personality::AlwaysCooperate => Choice::COOPERATE,
         Personality::AlwaysCheat => Choice::CHEAT,
-        Personality::CopyCat => m.opp_last_move,
+        Personality::CopyCat => m.opp_last_move.get(),
         Personality::Vengeful => {
             if m.betrayed() > 1 {
                 return Choice::CHEAT;
@@ -103,44 +82,53 @@ fn choose(p: &Personality, m: &Memory) -> Choice {
 }
 
 // Player is the trait to repesent a player of the game
-// most notably the players behavior implementation
+// TODO::Split into different impl?
 pub trait Player: fmt::Display + std::clone::Clone {
     fn choose(&self, opp_tag: &str) -> Choice;
-    fn play(&mut self, other: &mut Self);
     fn name(&self) -> &str;
-    fn score_outcome(&mut self, o: &Outcome);
-    fn score(&self) -> i32;
+    fn memory(&self) -> &Memory;
+    fn score(&mut self) -> i32;
     fn tag(&self) -> &str;
-    fn add_memory(&mut self, tag: &str, other: &Outcome);
+    fn add_memory(&mut self, tag: &str, other: (Choice, Choice));
 }
 
 impl Player for Entity {
     fn choose(&self, opp_tag: &str) -> Choice {
-        choose(&self.personality_type, &self.memory)
+        choose(&self.personality_type, &self.memory, opp_tag)
     }
 
-    fn play(&mut self, other: &mut Self) {
-        let (o1, o2) = determine(self.choose(other.tag()), other.choose(self.tag()));
-        self.score_outcome(&o1);
-        other.score_outcome(&o2);
-        self.add_memory(other.tag(), &o2);
-        other.add_memory(self.tag(), &o1);
+    // score derives the players current score from the move history
+    fn score(&mut self) -> i32 {
+        let mut new_sum: i32 = 0;
+        // let last = self.memory.opp_last_move;
+        self.memory
+            .history
+            .iter()
+            .map(|m| {
+                let (o1, _) = determine(m.player_choice, m.opp_choice);
+                self.memory.opp_last_move.replace(m.opp_choice);
+                Outcome::positive_scoring(&o1)
+            })
+            .for_each(|num| new_sum += num);
+        self.score = new_sum;
+        new_sum
     }
 
-    fn score(&self) -> i32 {
-        self.score
-    }
-
-    fn add_memory(&mut self, tag: &str, other: &Outcome) {
-        let m = self.get_memory();
-    }
-
-    fn score_outcome(&mut self, o: &Outcome) {
-        self.score += Outcome::positive_scoring(o) as i32;
+    // add_memory adds a new memory, updates the top level fields and updates the score
+    fn add_memory(&mut self, tag: &str, choices: (Choice, Choice)) {
+        self.memory.opp_last_move.replace(choices.1);
+        self.memory
+            .history
+            .insert(0, Meme::new(tag.to_string(), choices.0, choices.1));
+        self.score();
     }
 
     fn name(&self) -> &str {
         self.name.as_str()
+    }
+
+    fn memory(&self) -> &Memory {
+        &self.memory
     }
 
     fn tag(&self) -> &str {
@@ -152,47 +140,55 @@ impl Player for Entity {
 // TODO::implement a lot more functions on memory
 #[derive(Clone, Debug)]
 pub struct Memory {
-    opp_last_move: Choice,
-    last_move: Choice,
-    moves: Vec<Meme>,
+    history: Vec<Meme>,
+    opp_last_move: Cell<Choice>,
 }
 
 #[derive(Clone, Debug)]
-struct Meme {
-    oppTag: String,
-    outcomes: Vec<Outcome>,
+pub struct Meme {
+    // opp_tag: String,
+    player_choice: Choice,
+    opp_choice: Choice,
+}
+
+impl Meme {
+    fn new(_opp_tag: String, p_choice: Choice, opp_choice: Choice) -> Self {
+        Self {
+            // opp_tag: tag,
+            player_choice: p_choice,
+            opp_choice,
+        }
+    }
 }
 
 impl Memory {
     fn new() -> Self {
         Self {
-            opp_last_move: Choice::COOPERATE, // everyone starts nice
-            last_move: Choice::COOPERATE,
-            moves: Vec::new(),
+            history: Vec::new(),
+            opp_last_move: Cell::new(Choice::COOPERATE), // everyone starts nice
+                                                         // last_move: Choice::COOPERATE,
         }
     }
 
+    // total betrayals
     fn betrayed(&self) -> i32 {
-        // self.outcomes.iter();
-        1
+        self.history
+            .iter()
+            .filter(|x| x.opp_choice == Choice::CHEAT)
+            .fold(0, |acc, _| acc + 1)
     }
 }
 
-fn reverse(c: Choice) -> Choice {
-    match c {
-        Choice::COOPERATE => Choice::CHEAT,
-        Choice::CHEAT => Choice::COOPERATE,
-    }
-}
 // For printing outcomes
 impl fmt::Display for Entity {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let output = format!(
-            "{}\t{}\t{}",
-            self.name(),
-            self.get_score(),
-            self.get_personality_type()
-        );
+        let output = self.name.to_string();
+        // let output = format!(
+        //     "{}\t{}\t{}",
+        //     self.name(),
+        //     self.get_score(),
+        //     self.get_personality_type()
+        // );
         write!(f, "{}", output)
     }
 }
@@ -209,45 +205,15 @@ impl fmt::Display for Personality {
     }
 }
 
-impl fmt::Display for Memory {
+impl fmt::Display for Meme {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write! {f, "{}", String::from("Memories")}
+        write!(f, "{:?}", self)
     }
 }
 
-// Example of newtype pattern
-// struct PlayerList(pub Vec<Entity>);
-// impl fmt::Display for PlayerList {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-
-//         // self.0.iter().fold(Ok(()), |result, album| {
-//         //     result.and_then(|_| writeln!(f, "{}", album))
-//         // })
-//     }
-// }
-
-// pub fn print_result(players: &Vec<Box<dyn entity::Player>>) {
-//     let mut table = Table::new();
-
-//     // Add a row per time
-//     table.add_row(row!["Behavior", "Name", "Score"]);
-//     for p in players {
-//         table.add_row(Row::new(vec![
-//             tCell::new(&p.get_behavior()),
-//             tCell::new(&p.get_name()),
-//             tCell::new(&p.get_entity().get_score().to_string()),
-//         ]));
-//     }
-
-//     let format = format::FormatBuilder::new()
-//         .column_separator('|')
-//         .borders('|')
-//         .separators(
-//             &[format::LinePosition::Top, format::LinePosition::Bottom],
-//             format::LineSeparator::new('-', '+', '+', '+'),
-//         )
-//         .padding(1, 1)
-//         .build();
-//     table.set_format(format);
-//     table.printstd();
-// }
+impl fmt::Display for Memory {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let memes: i32 = self.history.iter().len() as i32;
+        write! {f, "{}", memes}
+    }
+}

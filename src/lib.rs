@@ -3,11 +3,7 @@ use rand::{thread_rng, Rng};
 use std::cmp::Eq;
 
 pub mod entity;
-pub mod game;
-
-use entity::Personality;
-
-use crate::entity::{Entity, Player};
+use crate::entity::{Entity, Personality, Player};
 
 // Outcome is an enum to express the reward values of the game result matrix
 // TODO::return the classic T > R > P > S representation and provide a trait
@@ -23,7 +19,7 @@ pub enum Outcome {
 // TODO::Implement scoring types as enums?
 // TODO::Handle other types like algebraic (ie "P","R","S","T")
 impl Outcome {
-    fn positive_scoring(o: &Outcome) -> i8 {
+    fn positive_scoring(o: &Outcome) -> i32 {
         match o {
             Outcome::PUNISH => 0,
             Outcome::SUCKER => -1,
@@ -44,33 +40,58 @@ pub enum Choice {
 pub fn make_players(num: i32) -> Vec<entity::Entity> {
     let mut player_gen = Vec::new();
     let mut rng = thread_rng();
-    let length = 5;
+    let length = 3;
     let seed = 0o152;
     let generator = BlockId::new(Alphabet::alphanumeric(), seed, length);
     for _ in 0..num {
-        let tmp = Entity::new_player(rng.gen::<Personality>(), generator.encode_string(rng.gen()));
+        let tmp = Entity::new(rng.gen::<Personality>(), generator.encode_string(rng.gen()));
+        // let tmp = Entity::new_player(rng.gen::<Personality>(), i.to_string());
         player_gen.push(tmp);
     }
     player_gen
 }
 
-// play_game determines what kind of game to play
-// TODO::more modes
-pub fn play_game(players: &mut Vec<impl entity::Player>, _rounds: i16) {
-    play_round_robin(players);
-}
-
-pub fn play_round_robin(players: &mut Vec<impl entity::Player>) {
+fn set_rounds(players: &Vec<impl entity::Player>) -> Vec<(String, String)> {
+    let mut round_list = Vec::new();
     let mut opponents = players.clone();
     for player in players {
         opponents.retain(|opp| opp.name() != player.name());
-        opponents.iter_mut().for_each(|o| player.play(o));
+        opponents
+            .iter()
+            .for_each(|o| round_list.push((player.tag().to_string(), o.tag().to_string())));
+    }
+    round_list
+}
+
+// play_game determines what kind of game to play
+// TODO::more modes
+pub fn play_game(players: &mut Vec<impl entity::Player>, rounds: i32) {
+    if rounds <= 1 {
+        play_round_robin(players)
+    } else {
+        play_tournament(players, rounds)
     }
 }
 
-pub fn once(player_one: impl Player, player_two: impl Player) {
-    let m1 = player_one.choose(player_two.tag());
-    let m2 = player_two.choose(player_one.tag());
+fn play_tournament(players: &mut Vec<impl entity::Player>, rounds: i32) {
+    for _ in 0..rounds {
+        play_round_robin(players);
+    }
+}
+
+fn play_round_robin(players: &mut Vec<impl entity::Player>) {
+    let rounds = set_rounds(players);
+    for (p1, p2) in &rounds {
+        let (c1, c2);
+        {
+            let player_one = find(p1, players).unwrap();
+            let player_two = find(p2, players).unwrap();
+            c1 = player_one.choose(player_two.tag());
+            c2 = player_two.choose(player_one.tag());
+        }
+        find_mut(p1, players).unwrap().add_memory(p2, (c1, c2));
+        find_mut(p2, players).unwrap().add_memory(p1, (c2, c1));
+    }
 }
 
 // At the heart of the prisoners dilemma is the choice between two players
@@ -95,23 +116,27 @@ pub fn determine(m1: Choice, m2: Choice) -> (Outcome, Outcome) {
     }
 }
 
-pub fn print_result(players: &[impl entity::Player]) {
-    for p in players.iter() {
-        println!("{}", p)
+//
+// Things that should probably be generics
+//
+
+fn find<'a>(tag: &str, players: &'a Vec<impl entity::Player>) -> Option<&'a impl entity::Player> {
+    for (_, v) in players.iter().enumerate() {
+        if v.tag() == tag {
+            return Some(v);
+        }
     }
+    None
 }
 
-// pub fn new_game(players: i32) -> game::Game<Entity> {
-//     // println!("New game for {} players", players);
-//     let mut rng = thread_rng();
-//     let mut new_game: game::Game<Entity> = game::Game {
-//         name: String::from("Test Game"),
-//         players: vec![],
-//     };
-
-//     for _ in 0..players {
-//         let tmp = Entity::new_player(rng.gen::<Personality>());
-//         new_game.add_player(tmp);
-//     }
-//     new_game
-// }
+fn find_mut<'a>(
+    tag: &str,
+    players: &'a mut Vec<impl entity::Player>,
+) -> Option<&'a mut impl entity::Player> {
+    for (_, v) in players.iter_mut().enumerate() {
+        if v.tag() == tag {
+            return Some(v);
+        }
+    }
+    None
+}
