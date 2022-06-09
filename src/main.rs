@@ -1,4 +1,6 @@
 use clap::Parser;
+use tabled::style::Border;
+use tabled::{object::Rows, Modify, TableIteratorExt};
 use tabled::{Style, Table};
 // use crate::entity::{Entity, Player};
 // https://brson.github.io/rust-anthology/1/effectively-using-iterators.html
@@ -20,9 +22,11 @@ struct Args {
 fn main() {
     // clap
     let args = Args::parse();
-
     let mut players = prisoner::make_players(args.players);
     prisoner::play_game(&mut players, args.rounds.unwrap_or(1));
-    let output_table = Table::new(players).with(Style::rounded()).to_string();
+    let output_table = Table::new(players)
+        .with(Style::rounded())
+        // .with(Modify::new(Rows::single(1)).with(Border::default().top('x')))
+        .to_string();
     print!("{}", output_table)
 }

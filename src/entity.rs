@@ -40,7 +40,7 @@ impl Distribution<Personality> for Standard {
 #[derive(Clone, Debug, Tabled)]
 pub struct Entity {
     name: String,
-    // TODO::Generate short id's https://github.com/drifting-in-space/block-id
+    #[tabled(skip)]
     tag: String,
     score: i32,
     #[tabled(skip)]
@@ -68,12 +68,14 @@ fn choose(p: &Personality, m: &Memory, _opp_tag: &str) -> Choice {
         Personality::CopyCat => m.opp_last_move.get(),
         Personality::Vengeful => {
             if m.betrayed() > 1 {
+                // println!("Vengeful cheats");
                 return Choice::CHEAT;
             }
             Choice::COOPERATE
         }
         Personality::SlowLearner => {
             if m.betrayed() > 5 {
+                // println!("Slow learner cheats");
                 return Choice::CHEAT;
             }
             Choice::COOPERATE
@@ -166,7 +168,6 @@ impl Memory {
         Self {
             history: Vec::new(),
             opp_last_move: Cell::new(Choice::COOPERATE), // everyone starts nice
-                                                         // last_move: Choice::COOPERATE,
         }
     }
 
