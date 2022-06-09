@@ -51,6 +51,8 @@ pub fn make_players(num: i32) -> Vec<entity::Entity> {
     player_gen
 }
 
+// set_rounds takes a Vec of players and produces the order they will compete
+// against each other, it is called at the beginning of round_robin
 fn set_rounds(players: &Vec<impl entity::Player>) -> Vec<(String, String)> {
     let mut round_list = Vec::new();
     let mut opponents = players.clone();
