@@ -1,3 +1,18 @@
+//! An example game can be expressed using the library types:
+//!
+//! ```rust,no_run
+//! let mut players = prisoner::make_players(args.players);
+//! prisoner::play_game(&mut players, args.rounds.unwrap_or(1));
+//! let output_table = Table::new(players)
+//!     .with(Style::rounded())
+//!     // .with(Modify::new(Rows::single(1)).with(Border::default().top('x')))
+//!     .to_string();
+//! print!("{}", output_table)
+//! ```
+//!
+//! Providing more than one round initiates a "tournament", where round-robin
+//! will occur per number of rounds.
+//!
 use block_id::{Alphabet, BlockId};
 use rand::{thread_rng, Rng};
 use std::cmp::Eq;
@@ -5,21 +20,35 @@ use std::cmp::Eq;
 pub mod entity;
 use crate::entity::{Entity, Personality, Player};
 
-// Outcome is an enum to express the reward values of the game result matrix
-// TODO::return the classic T > R > P > S representation and provide a trait
-// to implement the reward values
+/// Outcome represents results of the game. There can only be these four
+/// results. Different scoring implementations of functions can be applied.
+///
+/// The scoring equation is `T > R > P > S`.
 #[derive(Copy, Clone, Debug)]
 pub enum Outcome {
+    /// The result if both players CHEAT
     PUNISH,
+    /// The result if a player COOPERATES, and their opponent CHEATs
     SUCKER,
+    /// The result if both players COOPERATE
     REWARD,
+    /// The result the player CHEATs and their opponents COOPERATEs
     TEMPTATION,
 }
 
-// TODO::Implement scoring types as enums?
-// TODO::Handle other types like algebraic (ie "P","R","S","T")
 impl Outcome {
-    fn positive_scoring(o: &Outcome) -> i32 {
+    /// Traditional scoring
+    pub fn traditional(o: &Outcome) -> i32 {
+        match o {
+            Outcome::PUNISH => -2,
+            Outcome::SUCKER => -3,
+            Outcome::REWARD => -1,
+            Outcome::TEMPTATION => 0,
+        }
+    }
+
+    /// A "positive" scoring system
+    pub fn positive(o: &Outcome) -> i32 {
         match o {
             Outcome::PUNISH => 0,
             Outcome::SUCKER => -1,
@@ -27,16 +56,29 @@ impl Outcome {
             Outcome::TEMPTATION => 3,
         }
     }
+
+    /// Get results as symbols (ie "`T, R, P, S`")
+    pub fn algebraic(o: &Outcome) -> char {
+        match o {
+            Outcome::PUNISH => 'P',
+            Outcome::SUCKER => 'S',
+            Outcome::REWARD => 'R',
+            Outcome::TEMPTATION => 'T',
+        }
+    }
 }
 
-// Choice represents the two choices of the game
+/// In every roound the player can only make one of two choices, CHEAT, or COOPERATE
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Choice {
+    /// Attempt to betray the other player
     CHEAT,
+    /// Attempt to work with the other player
     COOPERATE,
 }
 
-// make_players will assemble a Vector of basic entities
+/// make_players will assemble a Vector of basic entities using fake data
+/// and a random distribution of personalities
 pub fn make_players(num: i32) -> Vec<entity::Entity> {
     let mut player_gen = Vec::new();
     let mut rng = thread_rng();
@@ -65,8 +107,8 @@ fn set_rounds(players: &Vec<impl entity::Player>) -> Vec<(String, String)> {
     round_list
 }
 
-// play_game determines what kind of game to play
-// TODO::more modes
+/// play_game determines what kind of game to play, 0 or 1 will be a straight
+/// round robin, anything more will be round robin with multiple rounds
 pub fn play_game(players: &mut Vec<impl entity::Player>, rounds: i32) {
     if rounds <= 1 {
         play_round_robin(players)
@@ -96,9 +138,9 @@ fn play_round_robin(players: &mut Vec<impl entity::Player>) {
     }
 }
 
-// At the heart of the prisoners dilemma is the choice between two players
-// they can choose to COOPERATE or CHEAT (or BETRAY, etc). The possible outcomes
-// can be found here: https://en.wikipedia.org/wiki/Prisoner%27s_dilemma
+/// At the heart of the prisoners dilemma is the choice between two players
+/// they can choose to COOPERATE or CHEAT (or BETRAY, etc). The possible outcomes
+/// can be found here: https://en.wikipedia.org/wiki/Prisoner%27s_dilemma
 pub fn determine(m1: Choice, m2: Choice) -> (Outcome, Outcome) {
     match m1 {
         Choice::COOPERATE => {
