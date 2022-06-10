@@ -1,3 +1,10 @@
+//! Entity is a concrete base type and Player implementation
+//!
+//! Entity provides a memory structure which keeps track or who this entity
+//! has played in its lifetime, and the outcomes. Names are generated as on
+//! creation of a new entity.
+//!
+
 use fake::faker::name::en::*;
 use fake::Fake;
 use rand::distributions::{Distribution, Standard};
@@ -10,13 +17,20 @@ use crate::determine;
 use crate::Choice;
 use crate::Outcome;
 
-// Define the types of personalities, actual decisions handled by `choose()`
+/// Personality is an enum used to select an entities behavior. The class function
+/// `choose` holds logic depending on which personality is being used. Some
+// personalities requires access to memory.
 #[derive(Clone, Copy, Debug)]
 pub enum Personality {
+    /// Will always choose COOPERATE
     AlwaysCooperate,
+    /// Will always choose CHEAT
     AlwaysCheat,
+    /// Will do the move its opponenet did the last round/// Will do the move its opponenet did the last round
     CopyCat,
+    /// Once betrayed, will always CHEAT
     Vengeful,
+    /// Will only CHEAT if betrayed more than 5 times
     SlowLearner,
 }
 
@@ -36,7 +50,7 @@ impl Distribution<Personality> for Standard {
     }
 }
 
-// A concrete struct from which to base the Player trait and hold their data
+/// A concrete base class to hold game data.
 #[derive(Clone, Debug, Tabled)]
 pub struct Entity {
     name: String,
@@ -83,8 +97,8 @@ fn choose(p: &Personality, m: &Memory, _opp_tag: &str) -> Choice {
     }
 }
 
-// Player is the trait to repesent a player of the game
-// TODO::Split into different impl?
+/// Any concrete type which provides the methods required to play the The
+/// Prisoner's Dilemna, and information for display.
 pub trait Player: fmt::Display + std::clone::Clone {
     fn choose(&self, opp_tag: &str) -> Choice;
     fn name(&self) -> &str;
@@ -109,7 +123,7 @@ impl Player for Entity {
             .map(|m| {
                 let (o1, _) = determine(m.player_choice, m.opp_choice);
                 self.memory.opp_last_move.replace(m.opp_choice);
-                Outcome::positive_scoring(&o1)
+                Outcome::positive(&o1)
             })
             .for_each(|num| new_sum += num);
         self.score = new_sum;
@@ -138,14 +152,14 @@ impl Player for Entity {
     }
 }
 
-// Memory is used when making a choice on how to play
-// TODO::implement a lot more functions on memory
+/// A list of moves and information about the last move
 #[derive(Clone, Debug)]
 pub struct Memory {
     history: Vec<Meme>,
     opp_last_move: Cell<Choice>,
 }
 
+/// Represents an interactoin with another player
 #[derive(Clone, Debug)]
 pub struct Meme {
     // opp_tag: String,

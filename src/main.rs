@@ -1,18 +1,3 @@
-//! A simple and straightforward library for The Prisoner's Dilemna
-//!
-//! Provides enum's for Outcomes and Choices in the game
-//!
-//! An example game can be expressed using the library types:
-//!
-//! ```rust,no_run
-//! let mut players = prisoner::make_players(args.players);
-//! prisoner::play_game(&mut players, args.rounds.unwrap_or(1));
-//! let output_table = Table::new(players)
-//!     .with(Style::rounded())
-//!     // .with(Modify::new(Rows::single(1)).with(Border::default().top('x')))
-//!     .to_string();
-//! print!("{}", output_table)
-//! ```
 use clap::Parser;
 use tabled::{Style, Table};
 // https://brson.github.io/rust-anthology/1/effectively-using-iterators.html

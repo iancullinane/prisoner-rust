@@ -1,3 +1,18 @@
+//! An example game can be expressed using the library types:
+//!
+//! ```rust,no_run
+//! let mut players = prisoner::make_players(args.players);
+//! prisoner::play_game(&mut players, args.rounds.unwrap_or(1));
+//! let output_table = Table::new(players)
+//!     .with(Style::rounded())
+//!     // .with(Modify::new(Rows::single(1)).with(Border::default().top('x')))
+//!     .to_string();
+//! print!("{}", output_table)
+//! ```
+//!
+//! Providing more than one round initiates a "tournament", where round-robin
+//! will occur per number of rounds.
+//!
 use block_id::{Alphabet, BlockId};
 use rand::{thread_rng, Rng};
 use std::cmp::Eq;
@@ -9,10 +24,6 @@ use crate::entity::{Entity, Personality, Player};
 /// results. Different scoring implementations of functions can be applied.
 ///
 /// The scoring equation is `T > R > P > S`.
-
-// Outcome is an enum to express the reward values of the game result matrix
-// TODO::return the classic T > R > P > S representation and provide a trait
-// to implement the reward values
 #[derive(Copy, Clone, Debug)]
 pub enum Outcome {
     PUNISH,
@@ -21,15 +32,31 @@ pub enum Outcome {
     TEMPTATION,
 }
 
-// TODO::Implement scoring types as enums?
-// TODO::Handle other types like algebraic (ie "P","R","S","T")
 impl Outcome {
-    fn positive_scoring(o: &Outcome) -> i32 {
+    fn traditional(o: &Outcome) -> i32 {
+        match o {
+            Outcome::PUNISH => -2,
+            Outcome::SUCKER => -3,
+            Outcome::REWARD => -1,
+            Outcome::TEMPTATION => 0,
+        }
+    }
+
+    fn positive(o: &Outcome) -> i32 {
         match o {
             Outcome::PUNISH => 0,
             Outcome::SUCKER => -1,
             Outcome::REWARD => 2,
             Outcome::TEMPTATION => 3,
+        }
+    }
+
+    fn algebraic(o: &Outcome) -> char {
+        match o {
+            Outcome::PUNISH => 'P',
+            Outcome::SUCKER => 'S',
+            Outcome::REWARD => 'R',
+            Outcome::TEMPTATION => 'T',
         }
     }
 }
@@ -70,8 +97,8 @@ fn set_rounds(players: &Vec<impl entity::Player>) -> Vec<(String, String)> {
     round_list
 }
 
-// play_game determines what kind of game to play
-// TODO::more modes
+/// play_game determines what kind of game to play, 0 or 1 will be a straight
+/// round robin, anything more will be round robin with multiple rounds
 pub fn play_game(players: &mut Vec<impl entity::Player>, rounds: i32) {
     if rounds <= 1 {
         play_round_robin(players)
