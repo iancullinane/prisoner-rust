@@ -26,14 +26,19 @@ use crate::entity::{Entity, Personality, Player};
 /// The scoring equation is `T > R > P > S`.
 #[derive(Copy, Clone, Debug)]
 pub enum Outcome {
+    /// The result if both players CHEAT
     PUNISH,
+    /// The result if a player COOPERATES, and their opponent CHEATs
     SUCKER,
+    /// The result if both players COOPERATE
     REWARD,
+    /// The result the player CHEATs and their opponents COOPERATEs
     TEMPTATION,
 }
 
 impl Outcome {
-    fn traditional(o: &Outcome) -> i32 {
+    /// Traditional scoring
+    pub fn traditional(o: &Outcome) -> i32 {
         match o {
             Outcome::PUNISH => -2,
             Outcome::SUCKER => -3,
@@ -42,7 +47,8 @@ impl Outcome {
         }
     }
 
-    fn positive(o: &Outcome) -> i32 {
+    /// A "positive" scoring system
+    pub fn positive(o: &Outcome) -> i32 {
         match o {
             Outcome::PUNISH => 0,
             Outcome::SUCKER => -1,
@@ -51,7 +57,8 @@ impl Outcome {
         }
     }
 
-    fn algebraic(o: &Outcome) -> char {
+    /// Get results as symbols (ie "`T, R, P, S`")
+    pub fn algebraic(o: &Outcome) -> char {
         match o {
             Outcome::PUNISH => 'P',
             Outcome::SUCKER => 'S',
@@ -64,11 +71,14 @@ impl Outcome {
 /// In every roound the player can only make one of two choices, CHEAT, or COOPERATE
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Choice {
+    /// Attempt to betray the other player
     CHEAT,
+    /// Attempt to work with the other player
     COOPERATE,
 }
 
-// make_players will assemble a Vector of basic entities
+/// make_players will assemble a Vector of basic entities using fake data
+/// and a random distribution of personalities
 pub fn make_players(num: i32) -> Vec<entity::Entity> {
     let mut player_gen = Vec::new();
     let mut rng = thread_rng();

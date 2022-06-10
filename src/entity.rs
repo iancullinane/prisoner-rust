@@ -26,7 +26,7 @@ pub enum Personality {
     AlwaysCooperate,
     /// Will always choose CHEAT
     AlwaysCheat,
-    /// Will do the move its opponenet did the last round/// Will do the move its opponenet did the last round
+    /// Will do the move its opponenet did the last round
     CopyCat,
     /// Once betrayed, will always CHEAT
     Vengeful,
