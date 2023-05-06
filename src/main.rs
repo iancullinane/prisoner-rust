@@ -5,6 +5,8 @@ use tabled::{Style, Table};
 // https://github.com/brson/rust-anthology/tree/master/src
 // https://github.com/rustomax/rust-iterators
 
+// https://quickref.me/rust.html
+
 // TODO::https://www.nature.com/articles/s41598-018-20426-w
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]

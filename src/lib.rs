@@ -95,15 +95,18 @@ pub fn make_players(num: i32) -> Vec<entity::Entity> {
 
 // set_rounds takes a Vec of players and produces the order they will compete
 // against each other, it is called at the beginning of round_robin
-fn set_rounds(players: &Vec<impl entity::Player>) -> Vec<(String, String)> {
-    let mut round_list = Vec::new();
-    let mut opponents = players.clone();
-    for player in players {
-        opponents.retain(|opp| opp.name() != player.name());
-        opponents
-            .iter()
-            .for_each(|o| round_list.push((player.tag().to_string(), o.tag().to_string())));
-    }
+fn set_rounds(players: &[impl entity::Player]) -> Vec<(String, String)> {
+    let opponents = players.to_owned();
+    let round_list = players
+        .iter()
+        .enumerate()
+        .flat_map(|(i, player)| {
+            opponents
+                .iter()
+                .skip(i + 1)
+                .map(move |opponent| (player.tag().to_string(), opponent.tag().to_string()))
+        })
+        .collect::<Vec<_>>();
     round_list
 }
 
