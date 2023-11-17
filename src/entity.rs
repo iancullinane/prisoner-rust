@@ -72,6 +72,13 @@ impl Entity {
             tag,
         }
     }
+
+    pub fn full_info(&self) -> String {
+        format!(
+            "Name: {}\tScore: {}\tPersonality: {:?}",
+            self.name, self.score, self.personality_type
+        )
+    }
 }
 
 // Choose parses all personalities

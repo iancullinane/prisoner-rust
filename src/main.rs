@@ -1,4 +1,5 @@
 use clap::Parser;
+use std::io;
 use tabled::{Style, Table};
 // https://brson.github.io/rust-anthology/1/effectively-using-iterators.html
 // https://github.com/mre/idiomatic-rust
@@ -18,14 +19,59 @@ struct Args {
     rounds: Option<i32>,
 }
 
+// fn main() {
+//     // clap
+//     let args = Args::parse();
+//     let mut players = prisoner::make_players(args.players);
+//     prisoner::play_game(&mut players, args.rounds.unwrap_or(1));
+//     let output_table = Table::new(players)
+//         .with(Style::rounded())
+//         // .with(Modify::new(Rows::single(1)).with(Border::default().top('x')))
+//         .to_string();
+//     print!("{}", output_table)
+// }
+
 fn main() {
-    // clap
+    // ...
     let args = Args::parse();
     let mut players = prisoner::make_players(args.players);
-    prisoner::play_game(&mut players, args.rounds.unwrap_or(1));
-    let output_table = Table::new(players)
+    let output_table = Table::new(players.clone())
         .with(Style::rounded())
-        // .with(Modify::new(Rows::single(1)).with(Border::default().top('x')))
         .to_string();
-    print!("{}", output_table)
+    print!("{}", output_table);
+
+    loop {
+        println!("Enter command: ('findplayer [name]' to find player, 'exit' to quit)");
+
+        let mut input = String::new();
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read line");
+
+        let parts: Vec<&str> = input.trim().split_whitespace().collect();
+
+        if parts.is_empty() {
+            continue;
+        }
+
+        match parts[0] {
+            "findplayer" => {
+                if parts.len() > 1 {
+                    match prisoner::find_by_name(parts[1], &players) {
+                        Some(player) => println!("{}", player.full_info()),
+                        None => println!("Player not found"),
+                    }
+                } else {
+                    println!("Please provide a player name.");
+                }
+            }
+            "play" => {
+                prisoner::play_game(&mut players, args.rounds.unwrap_or(1));
+                let output_table = Table::new(&players).with(Style::rounded()).to_string();
+                print!("{}", output_table)
+            }
+            "exit" => break,
+            _ => println!("Unknown command"),
+        }
+    }
 }
