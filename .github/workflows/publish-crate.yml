@@ -22,7 +22,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - run: cargo publish --token ${CRATES_PRISONER_TOKEN}
+      - run: cargo publish --token ${CRATES_TOKEN}
         env:
           CRATES_TOKEN: ${{ secrets.CRATES_PRISONER_TOKEN }}    
     
