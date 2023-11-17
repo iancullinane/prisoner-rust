@@ -112,7 +112,7 @@ fn set_rounds(players: &[impl entity::Player]) -> Vec<(String, String)> {
 
 /// play_game determines what kind of game to play, 0 or 1 will be a straight
 /// round robin, anything more will be round robin with multiple rounds
-pub fn play_game(players: &mut Vec<impl entity::Player>, rounds: i32) {
+pub fn play_game(players: &mut [impl entity::Player], rounds: i32) {
     if rounds <= 1 {
         play_round_robin(players)
     } else {
@@ -120,13 +120,13 @@ pub fn play_game(players: &mut Vec<impl entity::Player>, rounds: i32) {
     }
 }
 
-fn play_tournament(players: &mut Vec<impl entity::Player>, rounds: i32) {
+fn play_tournament(players: &mut [impl entity::Player], rounds: i32) {
     for _ in 0..rounds {
         play_round_robin(players);
     }
 }
 
-fn play_round_robin(players: &mut Vec<impl entity::Player>) {
+fn play_round_robin(players: &mut [impl entity::Player]) {
     let rounds = set_rounds(players);
     for (p1, p2) in &rounds {
         let (c1, c2);
@@ -167,23 +167,13 @@ pub fn determine(m1: Choice, m2: Choice) -> (Outcome, Outcome) {
 // Things that should probably be generics
 //
 
-fn find<'a>(tag: &str, players: &'a Vec<impl entity::Player>) -> Option<&'a impl entity::Player> {
-    for (_, v) in players.iter().enumerate() {
-        if v.tag() == tag {
-            return Some(v);
-        }
-    }
-    None
+fn find<'a>(tag: &str, players: &'a [impl entity::Player]) -> Option<&'a impl entity::Player> {
+    players.iter().find(|&player| player.tag() == tag)
 }
 
 fn find_mut<'a>(
     tag: &str,
-    players: &'a mut Vec<impl entity::Player>,
+    players: &'a mut [impl entity::Player],
 ) -> Option<&'a mut impl entity::Player> {
-    for (_, v) in players.iter_mut().enumerate() {
-        if v.tag() == tag {
-            return Some(v);
-        }
-    }
-    None
+    players.iter_mut().find(|player| player.tag() == tag)
 }
