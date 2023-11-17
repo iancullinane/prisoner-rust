@@ -1,4 +1,4 @@
-![example workflow](https://github.com/github/docs/actions/workflows/publish-crate.yml/badge.svg)
+[![example workflow](https://github.com/github/docs/actions/workflows/publish-crate.yml/badge.svg)]
 [![Crate](https://img.shields.io/crates/v/prisoner)](https://crates.io/crates/prisoner)
 [![docs.rs](https://img.shields.io/docsrs/prisoner?color=blue)](https://docs.rs/prisoner)
 
