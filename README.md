@@ -1,4 +1,4 @@
-[![Build Status](https://cloud.drone.io/api/badges/iancullinane/prisoner-rust/status.svg)](https://cloud.drone.io/iancullinane/prisoner-rust)
+![example workflow](https://github.com/github/docs/actions/workflows/publish-crate.yml/badge.svg)
 [![Crate](https://img.shields.io/crates/v/prisoner)](https://crates.io/crates/prisoner)
 [![docs.rs](https://img.shields.io/docsrs/prisoner?color=blue)](https://docs.rs/prisoner)
 
