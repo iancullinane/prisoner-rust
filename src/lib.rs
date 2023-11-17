@@ -18,7 +18,7 @@ use rand::{thread_rng, Rng};
 use std::cmp::Eq;
 
 pub mod entity;
-use crate::entity::{Entity, Personality, Player};
+use crate::entity::{Entity, Personality};
 
 /// Outcome represents results of the game. There can only be these four
 /// results. Different scoring implementations of functions can be applied.
@@ -93,54 +93,6 @@ pub fn make_players(num: i32) -> Vec<entity::Entity> {
     player_gen
 }
 
-// set_rounds takes a Vec of players and produces the order they will compete
-// against each other, it is called at the beginning of round_robin
-fn set_rounds(players: &[impl entity::Player]) -> Vec<(String, String)> {
-    let opponents = players.to_owned();
-    let round_list = players
-        .iter()
-        .enumerate()
-        .flat_map(|(i, player)| {
-            opponents
-                .iter()
-                .skip(i + 1)
-                .map(move |opponent| (player.tag().to_string(), opponent.tag().to_string()))
-        })
-        .collect::<Vec<_>>();
-    round_list
-}
-
-/// play_game determines what kind of game to play, 0 or 1 will be a straight
-/// round robin, anything more will be round robin with multiple rounds
-pub fn play_game(players: &mut [impl entity::Player], rounds: i32) {
-    if rounds <= 1 {
-        play_round_robin(players)
-    } else {
-        play_tournament(players, rounds)
-    }
-}
-
-fn play_tournament(players: &mut [impl entity::Player], rounds: i32) {
-    for _ in 0..rounds {
-        play_round_robin(players);
-    }
-}
-
-fn play_round_robin(players: &mut [impl entity::Player]) {
-    let rounds = set_rounds(players);
-    for (p1, p2) in &rounds {
-        let (c1, c2);
-        {
-            let player_one = find(p1, players).unwrap();
-            let player_two = find(p2, players).unwrap();
-            c1 = player_one.choose(player_two.tag());
-            c2 = player_two.choose(player_one.tag());
-        }
-        find_mut(p1, players).unwrap().add_memory(p2, (c1, c2));
-        find_mut(p2, players).unwrap().add_memory(p1, (c2, c1));
-    }
-}
-
 /// At the heart of the prisoners dilemma is the choice between two players
 /// they can choose to COOPERATE or CHEAT (or BETRAY, etc). The possible outcomes
 /// can be found here: https://en.wikipedia.org/wiki/Prisoner%27s_dilemma
@@ -161,24 +113,4 @@ pub fn determine(m1: Choice, m2: Choice) -> (Outcome, Outcome) {
             }
         }
     }
-}
-
-//
-// Things that should probably be generics
-//
-
-fn find<'a>(tag: &str, players: &'a [impl entity::Player]) -> Option<&'a impl entity::Player> {
-    players.iter().find(|&player| player.tag() == tag)
-}
-
-fn find_mut<'a>(
-    tag: &str,
-    players: &'a mut [impl entity::Player],
-) -> Option<&'a mut impl entity::Player> {
-    players.iter_mut().find(|player| player.tag() == tag)
-}
-
-// find_by_player takes a player name and a slice of players and returns the player
-pub fn find_by_name(name: &str, players: &[Entity]) -> Option<Entity> {
-    players.iter().find(|player| player.name() == name).cloned()
 }

@@ -239,3 +239,16 @@ impl fmt::Display for Memory {
         write! {f, "{}", memes}
     }
 }
+
+pub fn find<'a>(tag: &str, players: &'a [impl Player]) -> Option<&'a impl Player> {
+    players.iter().find(|&player| player.tag() == tag)
+}
+
+pub fn find_mut<'a>(tag: &str, players: &'a mut [impl Player]) -> Option<&'a mut impl Player> {
+    players.iter_mut().find(|player| player.tag() == tag)
+}
+
+// find_by_player takes a player name and a slice of players and returns the player
+pub fn find_by_name(name: &str, players: &[Entity]) -> Option<Entity> {
+    players.iter().find(|player| player.name() == name).cloned()
+}

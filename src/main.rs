@@ -1,4 +1,5 @@
 use clap::Parser;
+use prisoner::entity;
 use std::io;
 use tabled::{Style, Table};
 // https://brson.github.io/rust-anthology/1/effectively-using-iterators.html
@@ -18,6 +19,8 @@ struct Args {
     #[clap(short, long)]
     rounds: Option<i32>,
 }
+
+pub mod game;
 
 // fn main() {
 //     // clap
@@ -41,14 +44,14 @@ fn main() {
     print!("{}", output_table);
 
     loop {
-        println!("Enter command: ('findplayer [name]' to find player, 'exit' to quit)");
+        println!(">");
 
         let mut input = String::new();
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
 
-        let parts: Vec<&str> = input.trim().split_whitespace().collect();
+        let parts: Vec<&str> = input.split_whitespace().collect();
 
         if parts.is_empty() {
             continue;
@@ -57,7 +60,7 @@ fn main() {
         match parts[0] {
             "findplayer" => {
                 if parts.len() > 1 {
-                    match prisoner::find_by_name(parts[1], &players) {
+                    match entity::find_by_name(parts[1], &players) {
                         Some(player) => println!("{}", player.full_info()),
                         None => println!("Player not found"),
                     }
@@ -66,7 +69,7 @@ fn main() {
                 }
             }
             "play" => {
-                prisoner::play_game(&mut players, args.rounds.unwrap_or(1));
+                game::play_game(&mut players, args.rounds.unwrap_or(1));
                 let output_table = Table::new(&players).with(Style::rounded()).to_string();
                 print!("{}", output_table)
             }
