@@ -1,5 +1,6 @@
 use clap::Parser;
 use prisoner::entity;
+use prisoner::entity::Player;
 use std::io;
 use tabled::{Style, Table};
 // https://brson.github.io/rust-anthology/1/effectively-using-iterators.html
@@ -37,15 +38,13 @@ pub mod game;
 fn main() {
     // ...
     let args = Args::parse();
-    let mut players = prisoner::make_players(args.players);
+    let mut players = game::make_players(args.players);
     let output_table = Table::new(players.clone())
         .with(Style::rounded())
         .to_string();
     print!("{}", output_table);
 
     loop {
-        println!(">");
-
         let mut input = String::new();
         io::stdin()
             .read_line(&mut input)
@@ -60,19 +59,30 @@ fn main() {
         match parts[0] {
             "findplayer" => {
                 if parts.len() > 1 {
-                    match entity::find_by_name(parts[1], &players) {
-                        Some(player) => println!("{}", player.full_info()),
-                        None => println!("Player not found"),
-                    }
+                    let player = entity::find(|&&p| p.name() == parts[1], &players);
+                    println!("{}", player.full_info());
+                    // match entity::find_by_name(parts[1], &players) {
+                    //     Some(player) => println!("{}", player.full_info()),
+                    //     None => println!("Player not found"),
+                    // }
                 } else {
                     println!("Please provide a player name.");
                 }
             }
+
+            "history" => {
+                if parts.len() > 1 {
+                    let player = entity::find(|&&p| p.name() == parts[1], &players);
+                    println!("Please provide a player name.");
+                }
+            }
+
             "play" => {
                 game::play_game(&mut players, args.rounds.unwrap_or(1));
                 let output_table = Table::new(&players).with(Style::rounded()).to_string();
                 print!("{}", output_table)
             }
+
             "exit" => break,
             _ => println!("Unknown command"),
         }

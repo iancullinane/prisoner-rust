@@ -11,6 +11,8 @@ use rand::distributions::{Distribution, Standard};
 use rand::Rng;
 use std::cell::Cell;
 use std::fmt;
+use strum::EnumCount;
+use strum_macros::{EnumCount as EnumCountMacro, EnumIter};
 use tabled::Tabled;
 
 use crate::determine;
@@ -20,7 +22,7 @@ use crate::Outcome;
 /// Personality is an enum used to select an entities behavior. The class function
 /// `choose` holds logic depending on which personality is being used. Some
 // personalities requires access to memory.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, EnumCountMacro, EnumIter)]
 pub enum Personality {
     /// Will always choose COOPERATE
     AlwaysCooperate,
@@ -38,7 +40,7 @@ pub enum Personality {
 impl Distribution<Personality> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Personality {
         // match rng.gen_range(0, 3) { // rand 0.5, 0.6, 0.7
-        match rng.gen_range(0..5) {
+        match rng.gen_range(0..Personality::COUNT) {
             // rand 0.8
             0 => Personality::AlwaysCooperate,
             1 => Personality::AlwaysCheat,
@@ -78,6 +80,10 @@ impl Entity {
             "Name: {}\tScore: {}\tPersonality: {:?}",
             self.name, self.score, self.personality_type
         )
+    }
+
+    pub fn get_memory(&self) -> &Memory {
+        &self.memory
     }
 }
 
@@ -169,15 +175,15 @@ pub struct Memory {
 /// Represents an interactoin with another player
 #[derive(Clone, Debug)]
 pub struct Meme {
-    // opp_tag: String,
+    opp_tag: String,
     player_choice: Choice,
     opp_choice: Choice,
 }
 
 impl Meme {
-    fn new(_opp_tag: String, p_choice: Choice, opp_choice: Choice) -> Self {
+    fn new(opp_tag: String, p_choice: Choice, opp_choice: Choice) -> Self {
         Self {
-            // opp_tag: tag,
+            opp_tag,
             player_choice: p_choice,
             opp_choice,
         }
@@ -229,26 +235,60 @@ impl fmt::Display for Personality {
 
 impl fmt::Display for Meme {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(
+            f,
+            "Player Choice: {}, Opponent () Choice: {}",
+            self.player_choice,
+            // find_name_from_tag(self.opp_tag),
+            self.opp_choice
+        )
     }
 }
 
 impl fmt::Display for Memory {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let memes: i32 = self.history.iter().len() as i32;
-        write! {f, "{}", memes}
+        // let memes: i32 = self.history.iter().len() as i32;
+        for m in self.history.iter() {
+            writeln!(f, "{}", m)?;
+        }
+        Ok(()) // Ensure to return Ok(()) after the loop
     }
 }
 
-pub fn find<'a>(tag: &str, players: &'a [impl Player]) -> Option<&'a impl Player> {
-    players.iter().find(|&player| player.tag() == tag)
+pub fn find<'a, T, F>(f: F, players: &'a [T]) -> Option<&'a T>
+where
+    T: Player,
+    F: Fn(&&T) -> bool,
+{
+    players.iter().find(f)
 }
 
-pub fn find_mut<'a>(tag: &str, players: &'a mut [impl Player]) -> Option<&'a mut impl Player> {
-    players.iter_mut().find(|player| player.tag() == tag)
+pub fn find_mut<'a, T, F>(f: F, players: &'a mut [T]) -> Option<&'a mut T>
+where
+    T: Player,
+    F: Fn(&&mut T) -> bool,
+{
+    players.iter_mut().find(f)
 }
 
-// find_by_player takes a player name and a slice of players and returns the player
-pub fn find_by_name(name: &str, players: &[Entity]) -> Option<Entity> {
-    players.iter().find(|player| player.name() == name).cloned()
-}
+// pub fn find<'a>(tag: &str, players: &'a [impl Player]) -> Option<&'a impl Player> {
+//     players.iter().find(|&player| player.tag() == tag)
+// }
+
+// pub fn find_mut<'a>(tag: &str, players: &'a mut [impl Player]) -> Option<&'a mut impl Player> {
+//     players.iter_mut().find(|player| player.tag() == tag)
+// }
+
+// // find_by_player takes a player name and a slice of players and returns the player
+// pub fn find_by_name(name: &str, players: &[Entity]) -> Option<Entity> {
+//     players.iter().find(|player| player.name() == name).cloned()
+// }
+
+// // find_by_player takes a player name and a slice of players and returns the player
+// pub fn find_name_from_tag(tag: &str, players: &[Entity]) -> String {
+//     let player = players.iter().find(|player| player.tag() == tag).cloned();
+//     match player {
+//         Some(player) => player.name().to_string(),
+//         None => "Name not found".to_string(),
+//     }
+// }

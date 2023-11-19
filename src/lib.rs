@@ -77,22 +77,6 @@ pub enum Choice {
     COOPERATE,
 }
 
-/// make_players will assemble a Vector of basic entities using fake data
-/// and a random distribution of personalities
-pub fn make_players(num: i32) -> Vec<entity::Entity> {
-    let mut player_gen = Vec::new();
-    let mut rng = thread_rng();
-    let length = 3;
-    let seed = 0o152;
-    let generator = BlockId::new(Alphabet::alphanumeric(), seed, length);
-    for _ in 0..num {
-        let tmp = Entity::new(rng.gen::<Personality>(), generator.encode_string(rng.gen()));
-        // let tmp = Entity::new_player(rng.gen::<Personality>(), i.to_string());
-        player_gen.push(tmp);
-    }
-    player_gen
-}
-
 /// At the heart of the prisoners dilemma is the choice between two players
 /// they can choose to COOPERATE or CHEAT (or BETRAY, etc). The possible outcomes
 /// can be found here: https://en.wikipedia.org/wiki/Prisoner%27s_dilemma

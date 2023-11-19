@@ -1,4 +1,23 @@
-use crate::entity::{find, find_mut, Player};
+use block_id::{Alphabet, BlockId};
+use rand::{thread_rng, Rng};
+
+use crate::entity::{find, find_mut, Entity, Personality, Player};
+
+/// make_players will assemble a Vector of basic entities using fake data
+/// and a random distribution of personalities
+pub fn make_players(num: i32) -> Vec<Entity> {
+    let mut player_gen = Vec::new();
+    let mut rng = thread_rng();
+    let length = 3;
+    let seed = 0o152;
+    let generator = BlockId::new(Alphabet::alphanumeric(), seed, length);
+    for _ in 0..num {
+        let tmp = Entity::new(rng.gen::<Personality>(), generator.encode_string(rng.gen()));
+        // let tmp = Entity::new_player(rng.gen::<Personality>(), i.to_string());
+        player_gen.push(tmp);
+    }
+    player_gen
+}
 
 /// play_game determines what kind of game to play, 0 or 1 will be a straight
 /// round robin, anything more will be round robin with multiple rounds
