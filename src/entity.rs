@@ -255,29 +255,29 @@ impl fmt::Display for Memory {
     }
 }
 
-pub fn find<'a, T, F>(f: F, players: &'a [T]) -> Option<&'a T>
-where
-    T: Player,
-    F: Fn(&&T) -> bool,
-{
-    players.iter().find(f)
-}
-
-pub fn find_mut<'a, T, F>(f: F, players: &'a mut [T]) -> Option<&'a mut T>
-where
-    T: Player,
-    F: Fn(&&mut T) -> bool,
-{
-    players.iter_mut().find(f)
-}
-
-// pub fn find<'a>(tag: &str, players: &'a [impl Player]) -> Option<&'a impl Player> {
-//     players.iter().find(|&player| player.tag() == tag)
+// pub fn find<'a, T, F>(f: F, players: &'a [T]) -> Option<&'a T>
+// where
+//     T: Player,
+//     F: Fn(&&T) -> bool,
+// {
+//     players.iter().find(f)
 // }
 
-// pub fn find_mut<'a>(tag: &str, players: &'a mut [impl Player]) -> Option<&'a mut impl Player> {
-//     players.iter_mut().find(|player| player.tag() == tag)
+// pub fn find_mut<'a, T, F>(f: F, players: &'a mut [T]) -> Option<&'a mut T>
+// where
+//     T: Player,
+//     F: Fn(&&mut T) -> bool,
+// {
+//     players.iter_mut().find(f)
 // }
+
+pub fn find<'a>(tag: &str, players: &'a [impl Player]) -> Option<&'a impl Player> {
+    players.iter().find(|&player| player.tag() == tag)
+}
+
+pub fn find_mut<'a>(tag: &str, players: &'a mut [impl Player]) -> Option<&'a mut impl Player> {
+    players.iter_mut().find(|player| player.tag() == tag)
+}
 
 // // find_by_player takes a player name and a slice of players and returns the player
 // pub fn find_by_name(name: &str, players: &[Entity]) -> Option<Entity> {

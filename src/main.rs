@@ -57,26 +57,25 @@ fn main() {
         }
 
         match parts[0] {
-            "findplayer" => {
-                if parts.len() > 1 {
-                    let player = entity::find(|&&p| p.name() == parts[1], &players);
-                    println!("{}", player.full_info());
-                    // match entity::find_by_name(parts[1], &players) {
-                    //     Some(player) => println!("{}", player.full_info()),
-                    //     None => println!("Player not found"),
-                    // }
-                } else {
-                    println!("Please provide a player name.");
-                }
-            }
+            // "findplayer" => {
+            //     if parts.len() > 1 {
+            //         let player = entity::find(|&p: &Player| p.name() == parts[1], &players);
+            //         println!("{}", player.full_info());
+            //         // match entity::find_by_name(parts[1], &players) {
+            //         //     Some(player) => println!("{}", player.full_info()),
+            //         //     None => println!("Player not found"),
+            //         // }
+            //     } else {
+            //         println!("Please provide a player name.");
+            //     }
+            // }
 
-            "history" => {
-                if parts.len() > 1 {
-                    let player = entity::find(|&&p| p.name() == parts[1], &players);
-                    println!("Please provide a player name.");
-                }
-            }
-
+            // "history" => {
+            //     if parts.len() > 1 {
+            //         let player = entity::find(|&&p| p.name() == parts[1], &players);
+            //         println!("Please provide a player name.");
+            //     }
+            // }
             "play" => {
                 game::play_game(&mut players, args.rounds.unwrap_or(1));
                 let output_table = Table::new(&players).with(Style::rounded()).to_string();
