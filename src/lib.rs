@@ -13,12 +13,10 @@
 //! Providing more than one round initiates a "tournament", where round-robin
 //! will occur per number of rounds.
 //!
-use block_id::{Alphabet, BlockId};
-use rand::{thread_rng, Rng};
+
 use std::cmp::Eq;
 
 pub mod entity;
-use crate::entity::{Entity, Personality};
 
 /// Outcome represents results of the game. There can only be these four
 /// results. Different scoring implementations of functions can be applied.

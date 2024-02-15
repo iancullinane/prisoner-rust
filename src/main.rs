@@ -1,6 +1,5 @@
 use clap::Parser;
 use prisoner::entity;
-use prisoner::entity::Player;
 use std::io;
 use tabled::{Style, Table};
 // https://brson.github.io/rust-anthology/1/effectively-using-iterators.html
@@ -22,18 +21,6 @@ struct Args {
 }
 
 pub mod game;
-
-// fn main() {
-//     // clap
-//     let args = Args::parse();
-//     let mut players = prisoner::make_players(args.players);
-//     prisoner::play_game(&mut players, args.rounds.unwrap_or(1));
-//     let output_table = Table::new(players)
-//         .with(Style::rounded())
-//         // .with(Modify::new(Rows::single(1)).with(Border::default().top('x')))
-//         .to_string();
-//     print!("{}", output_table)
-// }
 
 fn main() {
     // ...
