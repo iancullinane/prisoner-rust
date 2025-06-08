@@ -135,7 +135,6 @@ impl Player for Entity {
             .iter()
             .map(|m| {
                 let (o1, _) = determine(m.player_choice, m.opp_choice);
-                self.memory.opp_last_move.replace(m.opp_choice);
                 Outcome::positive(&o1)
             })
             .for_each(|num| new_sum += num);
@@ -292,3 +291,24 @@ pub fn find_mut<'a>(tag: &str, players: &'a mut [impl Player]) -> Option<&'a mut
 //         None => "Name not found".to_string(),
 //     }
 // }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn last_move_tracks_latest() {
+        let mut e = Entity::new(Personality::CopyCat, "a".to_string());
+
+        // First interaction: opponent cheats
+        e.add_memory("b", (Choice::COOPERATE, Choice::CHEAT));
+        assert_eq!(e.memory().opp_last_move.get(), Choice::CHEAT);
+
+        // Second interaction: opponent cooperates
+        e.add_memory("c", (Choice::COOPERATE, Choice::COOPERATE));
+        assert_eq!(e.memory().opp_last_move.get(), Choice::COOPERATE);
+
+        // CopyCat should mirror the last move
+        assert_eq!(e.choose("c"), Choice::COOPERATE);
+    }
+}
