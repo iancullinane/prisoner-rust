@@ -9,13 +9,13 @@ use fake::faker::name::en::*;
 use fake::Fake;
 use rand::distributions::{Distribution, Standard};
 use rand::Rng;
-use std::cell::Cell;
 use std::fmt;
 use strum::EnumCount;
 use strum_macros::{EnumCount as EnumCountMacro, EnumIter};
 use tabled::Tabled;
 
 use crate::determine;
+use crate::memory::{InMemoryStore, Meme, MemoryStore};
 use crate::Choice;
 use crate::Outcome;
 
@@ -60,7 +60,7 @@ pub struct Entity {
     tag: String,
     score: i32,
     #[tabled(skip)]
-    memory: Memory,
+    memory: Box<dyn MemoryStore>,
     personality_type: Personality,
 }
 
@@ -69,7 +69,7 @@ impl Entity {
         Self {
             name: FirstName().fake(),
             score: 0,
-            memory: Memory::new(),
+            memory: Box::new(InMemoryStore::new()),
             personality_type,
             tag,
         }
@@ -82,26 +82,26 @@ impl Entity {
         )
     }
 
-    pub fn get_memory(&self) -> &Memory {
+    pub fn get_memory(&self) -> &dyn MemoryStore {
         &self.memory
     }
 }
 
 // Choose parses all personalities
-fn choose(p: &Personality, m: &Memory, _opp_tag: &str) -> Choice {
+fn choose(p: &Personality, m: &dyn MemoryStore, _opp_tag: &str) -> Choice {
     match p {
         Personality::AlwaysCooperate => Choice::COOPERATE,
         Personality::AlwaysCheat => Choice::CHEAT,
-        Personality::CopyCat => m.opp_last_move.get(),
+        Personality::CopyCat => m.last_move(),
         Personality::Vengeful => {
-            if m.betrayed() > 1 {
+            if m.betrayed_count() > 1 {
                 // println!("Vengeful cheats");
                 return Choice::CHEAT;
             }
             Choice::COOPERATE
         }
         Personality::SlowLearner => {
-            if m.betrayed() > 5 {
+            if m.betrayed_count() > 5 {
                 // println!("Slow learner cheats");
                 return Choice::CHEAT;
             }
@@ -115,7 +115,7 @@ fn choose(p: &Personality, m: &Memory, _opp_tag: &str) -> Choice {
 pub trait Player: fmt::Display + std::clone::Clone {
     fn choose(&self, opp_tag: &str) -> Choice;
     fn name(&self) -> &str;
-    fn memory(&self) -> &Memory;
+    fn memory(&self) -> &dyn MemoryStore;
     fn score(&mut self) -> i32;
     fn tag(&self) -> &str;
     fn add_memory(&mut self, tag: &str, other: (Choice, Choice));
@@ -131,7 +131,7 @@ impl Player for Entity {
         let mut new_sum: i32 = 0;
         // let last = self.memory.opp_last_move;
         self.memory
-            .history
+            .history()
             .iter()
             .map(|m| {
                 let (o1, _) = determine(m.player_choice, m.opp_choice);
@@ -144,10 +144,7 @@ impl Player for Entity {
 
     // add_memory adds a new memory, updates the top level fields and updates the score
     fn add_memory(&mut self, tag: &str, choices: (Choice, Choice)) {
-        self.memory.opp_last_move.replace(choices.1);
-        self.memory
-            .history
-            .insert(0, Meme::new(tag.to_string(), choices.0, choices.1));
+        self.memory.add(tag, choices);
         self.score();
     }
 
@@ -155,8 +152,8 @@ impl Player for Entity {
         self.name.as_str()
     }
 
-    fn memory(&self) -> &Memory {
-        &self.memory
+    fn memory(&self) -> &dyn MemoryStore {
+        &*self.memory
     }
 
     fn tag(&self) -> &str {
@@ -164,47 +161,6 @@ impl Player for Entity {
     }
 }
 
-/// A list of moves and information about the last move
-#[derive(Clone, Debug)]
-pub struct Memory {
-    history: Vec<Meme>,
-    opp_last_move: Cell<Choice>,
-}
-
-/// Represents an interactoin with another player
-#[derive(Clone, Debug)]
-pub struct Meme {
-    opp_tag: String,
-    player_choice: Choice,
-    opp_choice: Choice,
-}
-
-impl Meme {
-    fn new(opp_tag: String, p_choice: Choice, opp_choice: Choice) -> Self {
-        Self {
-            opp_tag,
-            player_choice: p_choice,
-            opp_choice,
-        }
-    }
-}
-
-impl Memory {
-    fn new() -> Self {
-        Self {
-            history: Vec::new(),
-            opp_last_move: Cell::new(Choice::COOPERATE), // everyone starts nice
-        }
-    }
-
-    // total betrayals
-    fn betrayed(&self) -> i32 {
-        self.history
-            .iter()
-            .filter(|x| x.opp_choice == Choice::CHEAT)
-            .fold(0, |acc, _| acc + 1)
-    }
-}
 
 // For printing outcomes
 impl fmt::Display for Entity {
@@ -244,15 +200,6 @@ impl fmt::Display for Meme {
     }
 }
 
-impl fmt::Display for Memory {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // let memes: i32 = self.history.iter().len() as i32;
-        for m in self.history.iter() {
-            writeln!(f, "{}", m)?;
-        }
-        Ok(()) // Ensure to return Ok(()) after the loop
-    }
-}
 
 // pub fn find<'a, T, F>(f: F, players: &'a [T]) -> Option<&'a T>
 // where
@@ -302,11 +249,11 @@ mod tests {
 
         // First interaction: opponent cheats
         e.add_memory("b", (Choice::COOPERATE, Choice::CHEAT));
-        assert_eq!(e.memory().opp_last_move.get(), Choice::CHEAT);
+        assert_eq!(e.memory().last_move(), Choice::CHEAT);
 
         // Second interaction: opponent cooperates
         e.add_memory("c", (Choice::COOPERATE, Choice::COOPERATE));
-        assert_eq!(e.memory().opp_last_move.get(), Choice::COOPERATE);
+        assert_eq!(e.memory().last_move(), Choice::COOPERATE);
 
         // CopyCat should mirror the last move
         assert_eq!(e.choose("c"), Choice::COOPERATE);

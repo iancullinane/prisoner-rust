@@ -1,7 +1,7 @@
 use block_id::{Alphabet, BlockId};
 use rand::{thread_rng, Rng};
 
-use crate::entity::{find, find_mut, Entity, Personality, Player};
+use prisoner_core::entity::{find, find_mut, Entity, Personality, Player};
 
 /// make_players will assemble a Vector of basic entities using fake data
 /// and a random distribution of personalities
