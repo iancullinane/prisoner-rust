@@ -17,6 +17,8 @@
 use std::cmp::Eq;
 
 pub mod entity;
+pub mod memory;
+pub use memory::{InMemoryStore, MemoryStore, Meme};
 
 /// Outcome represents results of the game. There can only be these four
 /// results. Different scoring implementations of functions can be applied.

@@ -1,5 +1,5 @@
 use clap::Parser;
-use prisoner::entity;
+use prisoner_core::entity;
 use std::io;
 use tabled::{Style, Table};
 // https://brson.github.io/rust-anthology/1/effectively-using-iterators.html
